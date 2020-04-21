@@ -1,6 +1,6 @@
 //
 //  EvergreenElement.swift
-//  
+//
 //
 //  Created by Brian Hasenstab on 4/10/20.
 //
@@ -20,7 +20,7 @@ public class EvergreenElement {
 public class DivEvergreenElement: EvergreenElement {
     var identifier: String
     var parentDiv: DivEvergreenElement?
-
+    
     init(elementType: String, identifier: String) {
         self.identifier = identifier
         
@@ -44,13 +44,13 @@ public class TextEvergreenElement: EvergreenElement {
 public class ImageEvergreenElement: EvergreenElement {
     var src: String
     var alt: String
-    var title: String
+    var title: String?
     
-    init(elementType: String, src: String, alt: String, title: String) {
+    init(elementType: String, src: String, alt: String, title: String?) {
         self.src = src
         self.alt = alt
         self.title = title
-
+        
         super.init(elementType: elementType)
     }
 }
@@ -58,11 +58,11 @@ public class ImageEvergreenElement: EvergreenElement {
 public class ListEvergreenElement: EvergreenElement {
     var parentList: ListEvergreenElement?
     
-    init(elementType: String, parentList: ListEvergreenElement?) {
+    init(elementType: String, parentList: ListEvergreenElement? = nil) {
         if let parentList = parentList {
             self.parentList = parentList
         }
-
+        
         super.init(elementType: elementType)
     }
 }
@@ -75,7 +75,7 @@ public class ListItemEvergreenElement: TextEvergreenElement {
 
 public class BlockquoteEvergreenElement: EvergreenElement {
     var parentQuote: BlockquoteEvergreenElement?
-
+    
     init(parentQuote: BlockquoteEvergreenElement? = nil) {
         if let parentQuote = parentQuote {
             self.parentQuote = parentQuote
@@ -90,7 +90,7 @@ public class LinkEvergreenElement {
     var href: String
     var title: String?
     
-    init(text: String, href: String, title: String?) {
+    init(text: String, href: String, title: String? = nil) {
         self.text = text
         self.href = href
         self.title = title

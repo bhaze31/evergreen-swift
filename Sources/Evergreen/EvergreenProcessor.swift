@@ -32,26 +32,26 @@ public class EvergreenProcessor {
     var currentDiv: DivEvergreenElement?
     
     // MARK: Regular Expressions
-    var listMatch = try! NSRegularExpression(pattern: "^([0-9]+\\.|(-|\\+|\\*))", options: [])
-    var orderedMatch = try! NSRegularExpression(pattern: "^[0-9]+\\.", options: [])
-
-    var blockMatch = try! NSRegularExpression(pattern: "^>+", options: [])
-
-    var horizontalMatch = try! NSRegularExpression(pattern: "^(\\*{3,}|-{3,}|_{3,})$", options: [])
-
-    var breakMatch = try! NSRegularExpression(pattern: " {2,}$", options: [])
+    let listMatch = try! NSRegularExpression(pattern: "^([0-9]+\\.|(-|\\+|\\*))", options: [])
+    let orderedMatch = try! NSRegularExpression(pattern: "^[0-9]+\\.", options: [])
     
-    var altMatch = try! NSRegularExpression(pattern: "!?\\[.+\\]", options: [])
-    var descMatch = try! NSRegularExpression(pattern: "\\(.+\\)", options: [])
+    let blockMatch = try! NSRegularExpression(pattern: "^>+", options: [])
+    
+    let horizontalMatch = try! NSRegularExpression(pattern: "^(\\*{3,}|-{3,}|_{3,})$", options: [])
+    
+    let breakMatch = try! NSRegularExpression(pattern: " {2,}$", options: [])
+    
+    let altMatch = try! NSRegularExpression(pattern: "!?\\[.+\\]", options: [])
+    let descMatch = try! NSRegularExpression(pattern: "\\(.+\\)", options: [])
     
     
-    var linkMatch = try! NSRegularExpression(pattern: "\\[[\\w\\s\"']+\\]\\([\\w\\s\\/:\\.\"']+\\)", options: [])
+    let linkMatch = try! NSRegularExpression(pattern: "\\[[\\w\\s\"']+\\]\\([\\w\\s\\/:\\.\"']+\\)", options: [])
     
-    var imageMatch = try! NSRegularExpression(pattern: "^!\\[.+\\]\\(.+\\)$", options: [])
+    let imageMatch = try! NSRegularExpression(pattern: "^!\\[.+\\]\\(.+\\)$", options: [])
     
-    var linkImageMatch = try! NSRegularExpression(pattern: "^\\[!\\[[\\w\\s\"']+\\]\\([\\w\\s\\/:\\.\"']+\\)\\]\\([\\w\\s\\/:\\.\"']+\\)$", options: [])
+    let linkImageMatch = try! NSRegularExpression(pattern: "^\\[!\\[[\\w\\s\"']+\\]\\([\\w\\s\\/:\\.\"']+\\)\\]\\([\\w\\s\\/:\\.\"']+\\)$", options: [])
     
-    var divMatch = try! NSRegularExpression(pattern: "^<<-[A-Za-z0-9]{3}", options: [])
+    let divMatch = try! NSRegularExpression(pattern: "^<<-[A-Za-z0-9]{3}", options: [])
     
     // MARK: Content
     var lines: [String] = [] {
@@ -69,29 +69,33 @@ public class EvergreenProcessor {
         self.lines = lines.components(separatedBy: .newlines)
     }
     
+    func linkParser(line: String, in givenRange: NSRange? = nil) -> (String, String, String?) {
+        let range = givenRange ?? line.fullRange()
+        let anchorText = line.stringFromMatch(altMatch, in: range).replaceSubstrings(["![", "[", "]"])
+        
+        let descText = line.stringFromMatch(descMatch, in: range).replaceSubstrings(["(", ")"])
+        
+        let descParts = descText.split(separator: " ")
+        let href = String(descParts.first ?? "")
+        var title: String?
+        
+        if descParts.count > 1 {
+            title = descParts[1...descParts.count - 1].joined(separator: " ")
+        }
+        return (anchorText, href, title)
+    }
+    
     // MARK: <a> Element
     func parseLinks(element: TextEvergreenElement) {
         var lineCopy = element.text
         var links = [LinkEvergreenElement]()
+        
+        while let match = linkMatch.firstMatch(in: lineCopy, options: [], range: lineCopy.fullRange()) {
+            let (anchorText, href, altText) = linkParser(line: lineCopy, in: match.range)
 
-        while let match = linkMatch.firstMatch(in: lineCopy, options: [], range: NSRange(location: 0, length: lineCopy.count)) {
-            let altInfo = altMatch.firstMatch(in: lineCopy, options: [], range: match.range)!
-            let descInfo = descMatch.firstMatch(in: lineCopy, options: [], range: match.range)!
+            links.append(LinkEvergreenElement(text: anchorText, href: href, title: altText))
             
-            let altText = String(lineCopy[Range(altInfo.range, in: lineCopy)!]).replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: "")
-            let descText = String(lineCopy[Range(descInfo.range, in: lineCopy)!]).replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
-            
-            let descParts = descText.split(separator: " ")
-            let href = String(descParts.first ?? "")
-            var title: String?
-
-            if descParts.count > 1 {
-                title = descParts[1...descParts.count - 1].joined(separator: " ")
-            }
-
-            links.append(LinkEvergreenElement(text: altText, href: href, title: title))
-            
-            lineCopy = linkMatch.stringByReplacingMatches(in: lineCopy, options: [], range: match.range, withTemplate: "<a!>\(altText)<!a>")
+            lineCopy = lineCopy.replaceFirst(matching: linkMatch, with: "<a!>\(anchorText.trim())<!a>")
         }
         
         element.links = links
@@ -101,14 +105,13 @@ public class EvergreenProcessor {
     // MARK: <h#> Element
     func parseHeader(_ line: String) -> TextEvergreenElement {
         let headerMatch = try! NSRegularExpression(pattern: "^#+", options: [])
-        let range = NSRange(location: 0, length: line.count)
+        let range = line.fullRange()
         let matches = headerMatch.matches(in: line, options: [], range: range)
         let match = matches.first!
         
-        
         var text = line.replacingOccurrences(of: "#", with: "", options: [], range: Range<String.Index>(match.range, in: line))
-        text = text.trimmingCharacters(in: .whitespacesAndNewlines)
-
+        text = text.trim()
+        
         let header = TextEvergreenElement(elementType: "h\(match.range.length)", text: text)
         parseLinks(element: header)
         return header
@@ -123,33 +126,18 @@ public class EvergreenProcessor {
     
     // MARK: <img /> Element
     func parseImageElement(_ line: String) -> ImageEvergreenElement {
-        var src = "", alt = "", title = ""
-        let range = NSRange(location: 0, length: line.count)
-        let altInfo = altMatch.firstMatch(in: line, options: [], range: range)
-        if let match = altInfo {
-            alt = String(line[Range(match.range, in: line)!]).replacingOccurrences(of: "![", with: "").replacingOccurrences(of: "]", with: "")
-        }
-        let descInfo = descMatch.firstMatch(in: line, options: [], range: range)
-        if let match = descInfo {
-            let description = String(line[Range(match.range, in: line)!])
-            let descriptionParts = description.split(separator: " ")
-            src = String(descriptionParts.first ?? "").replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
-            if descriptionParts.count > 1 {
-                let titleParts = descriptionParts[1...descriptionParts.count - 1]
-                title = titleParts.joined(separator: " ").replacingOccurrences(of: ")", with: "")
-            }
-        }
+        let (alt, src, title) = linkParser(line: line)
         
         return ImageEvergreenElement(elementType: "img", src: src, alt: alt, title: title)
     }
     
     // MARK: Text Elements
     func parseTextElement(_ line: String) -> EvergreenElement {
-        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = line.trim()
         
         if trimmed.starts(with: "#") {
             return parseHeader(trimmed)
-        } else if let _ = imageMatch.firstMatch(in: line, options: [], range: NSRange(location: 0, length: line.count)) {
+        } else if line.isMatching(imageMatch) {
             return parseImageElement(line)
         }
         
@@ -157,20 +145,15 @@ public class EvergreenProcessor {
     }
     
     func nextListType(_ line: String) -> ListType {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
-        let range = NSRange(location: 0, length: trimmed.count)
-        guard let _ = orderedMatch.firstMatch(in: trimmed, options: [], range: range) else {
-            return .U_LIST
-        }
-        
-        return .O_LIST
+        let trimmed = line.trim()
+        return trimmed.isMatching(orderedMatch) ? .O_LIST : .U_LIST
     }
-
+    
     func parseListItem(_ line: String) -> ListItemEvergreenElement {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        let trimmed = line.trim()
         let listMatch = try! NSRegularExpression(pattern: "^([0-9]+\\.|(-|\\+|\\*))", options: [])
-        let range = NSRange(location: 0, length: trimmed.count)
-        let text = listMatch.stringByReplacingMatches(in: trimmed, options: [], range: range, withTemplate: "")
+        // We need to retrim the characters in whitespace, since after removing the leading item in the list (1., *, etc) there may be whitespace at the start of the text
+        let text = trimmed.removeAll(matching: listMatch).trim()
         
         let listItem = ListItemEvergreenElement(text)
         parseLinks(element: listItem)
@@ -179,15 +162,15 @@ public class EvergreenProcessor {
     
     func parseListElement(_ line: String) {
         let listType = nextListType(line)
+        let indentRegex = try! NSRegularExpression(pattern: " +", options: [])
         
         if line.starts(with: " ") && inList {
-            let indentRegex = try! NSRegularExpression(pattern: " +", options: [])
-            let indentLength = indentRegex.firstMatch(in: line, options: [], range: NSRange(location: 0, length: line.count))!.range.length
+            let indentLength = indentRegex.firstMatch(in: line, options: [], range: line.fullRange())!.range.length
             
             if currentListIndentLength < indentLength {
                 // We are indenting more than before, create a sub list
                 currentSubList += 1
-
+                
                 // Hold access to parent list, this should never fail since we increased indentation and are in a list
                 if let parentList = currentList {
                     // Get last created element in current parent list to attach new list to
@@ -225,6 +208,10 @@ public class EvergreenProcessor {
             currentList = listType == .O_LIST ? getOrderedList() : getUnorderedList()
             currentListType = listType
             inList = true
+            if line.starts(with: " ") {
+                let indentLength = indentRegex.firstMatch(in: line, options: [], range: line.fullRange())!.range.length
+                currentListIndentLength = indentLength
+            }
             
             currentList?.children.append(parseListItem(line))
             addToElements(currentList!)
@@ -244,9 +231,9 @@ public class EvergreenProcessor {
     // MARK: <blockquote> Element
     func parseBlockquoteElement(_ line: String) {
         let quoteRegex = try! NSRegularExpression(pattern: "^>+", options: [])
-        let quoteIndent = quoteRegex.firstMatch(in: line, options: [], range: NSRange(location: 0, length: line.count))!.range.length
+        let quoteIndent = quoteRegex.firstMatch(in: line, options: [], range: line.fullRange())!.range.length
         
-        let trimmed = blockMatch.stringByReplacingMatches(in: line, options: [], range: NSRange(location: 0, length: line.count), withTemplate: "")
+        let trimmed = line.removeAll(matching: blockMatch)
         
         if inBlockquote && currentBlockquoteIndentLength < quoteIndent {
             // Create a new blockquote within the current one
@@ -257,7 +244,7 @@ public class EvergreenProcessor {
             parentQuote?.children.append(currentQuote)
             
             currentQuote.children.append(parseParagraphElement(trimmed))
-
+            
             currentBlockquoteIndentLength = quoteIndent
         } else if inBlockquote && currentBlockquoteIndentLength > quoteIndent {
             // Go back to the parent blockquote
@@ -286,7 +273,7 @@ public class EvergreenProcessor {
             } else if shouldAppendParagraph { // Append to the current quote
                 // We have a blank line, create a new paragraph in this blockquote level
                 shouldAppendParagraph = false
-                    
+                
                 currentBlockquote?.children.append(parseParagraphElement(trimmed))
             } else if let children = currentBlockquote?.children, let paragraph = children.last as? TextEvergreenElement {
                 paragraph.text += " \(trimmed)"
@@ -339,37 +326,40 @@ public class EvergreenProcessor {
             }
         }
     }
-
+    
     func parseElement(_ line: String)  {
-        let range = NSRange(location: 0, length: line.count)
-        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedRange = NSRange(location: 0, length: trimmed.count)
+        let range = line.fullRange()
+        let trimmed = line.trim()
 
-        if let _ = horizontalMatch.firstMatch(in: line, options: [], range: range) {
+        if line.isMatching(horizontalMatch, in: range) {
             addToElements(EvergreenElement(elementType: "hr"))
-        } else if let _ = divMatch.firstMatch(in: line, options: [], range: range) {
+        } else if line.isMatching(divMatch, in: range) {
             parseDivElement(trimmed)
-        } else if let _ = listMatch.firstMatch(in: trimmed, options: [], range: trimmedRange) {
+        } else if trimmed.isMatching(listMatch) {
             parseListElement(line)
-        } else if let _ = blockMatch.firstMatch(in: line, options: [], range: range) {
+        } else if line.isMatching(blockMatch, in: range) {
             parseBlockquoteElement(line)
-        } else if line.trimmingCharacters(in: .whitespacesAndNewlines).count > 0 {
+        } else if trimmed.count > 0 {
             resetAllSpecialElements()
             addToElements(parseTextElement(trimmed))
         } else {
             resetAllSpecialElements()
         }
         
-        if let _ = breakMatch.firstMatch(in: line, options: [], range: range) {
+        if line.isMatching(breakMatch, in: range) {
             addToElements(EvergreenElement(elementType: "br"))
         }
     }
-
+    
+    public func updateLines(lines: [String]) {
+        self.lines = lines
+    }
+    
     public func parse() -> Elements {
         elements = Elements()
         resetAllSpecialElements()
         inDiv = false
-
+        
         lines.forEach { line in
             parseElement(line)
         }

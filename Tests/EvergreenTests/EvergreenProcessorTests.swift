@@ -13,7 +13,7 @@ final class EvergreenProcessorTests: XCTestCase {
             
             let processor = EvergreenProcessor(lines: header)
             
-            let elements: Elements = processor.parse()
+            let elements = processor.parse()
             let element = elements.first!
             let textElement = element as! TextEvergreenElement
 
@@ -26,7 +26,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let paragraph = "A paragraph"
         
         let processor = EvergreenProcessor(lines: paragraph)
-        let elements: Elements = processor.parse()
+        let elements = processor.parse()
         let element = elements.first
         
         let textElement = element as! TextEvergreenElement
@@ -39,7 +39,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let paragraphWithLinks = "A paragraph [that](title two links) has at least [two](reffin) links."
         
         let processor = EvergreenProcessor(lines: paragraphWithLinks)
-        let elements: Elements = processor.parse()
+        let elements = processor.parse()
         
         let element = elements.first as! TextEvergreenElement
         
@@ -62,7 +62,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let image = "![Alt Image](source and a title)"
         let titleLessImage = "![Alt Image](source)"
         let processor = EvergreenProcessor(lines: [image, titleLessImage])
-        let elements: Elements = processor.parse()
+        let elements = processor.parse()
         var element = elements.first
 
         let imageElement = element as! ImageEvergreenElement
@@ -77,14 +77,14 @@ final class EvergreenProcessorTests: XCTestCase {
         
         XCTAssertEqual(titleLessImageElement.alt, "Alt Image")
         XCTAssertEqual(titleLessImageElement.src, "source")
-        XCTAssertEqual(titleLessImageElement.title, "")
+        XCTAssertEqual(titleLessImageElement.title, nil)
     }
     
     func testBreakProcessed() {
         let breakString = "  "
         let processor = EvergreenProcessor(lines: breakString)
         
-        let elements: Elements = processor.parse()
+        let elements = processor.parse()
         let element = elements.first
         
         XCTAssertEqual(element?.elementType, "br")
@@ -97,7 +97,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [hr1, hr2, hr3])
         
-        var elements: Elements = processor.parse()
+        var elements = processor.parse()
         
         elements.forEach { element in
             XCTAssertEqual(element.elementType, "hr")
@@ -117,7 +117,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [listItem1, listItem2])
         
-        let elements: Elements = processor.parse()
+        let elements = processor.parse()
 
         XCTAssertEqual(elements.count, 1)
             
@@ -135,7 +135,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [listItem1, listItem2, listItem3])
         
-        let elements: Elements = processor.parse()
+        let elements = processor.parse()
         
         XCTAssertEqual(elements.count, 1)
         
@@ -163,7 +163,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [line1, line2, line3, line4, line5, line6, line7])
         
-        let elements: Elements = processor.parse()
+        let elements = processor.parse()
         
         XCTAssertEqual(elements.count, 1)
         
@@ -194,10 +194,30 @@ final class EvergreenProcessorTests: XCTestCase {
         assertListItems(subSubList.children)
     }
     
+    func testLinksInListsProcessed() {
+        let line1 = "1. A link [here](linkHref title)"
+        let line2 = "2. No links"
+        
+        let processor = EvergreenProcessor(lines: [line1, line2])
+        
+        let elements = processor.parse()
+        
+        let element = elements.first as! ListEvergreenElement
+        let children = element.children
+
+        XCTAssertEqual(element.elementType, "ol")
+        XCTAssertEqual(children.count, 2)
+        
+        let linkElement = children.first as! ListItemEvergreenElement
+        
+        XCTAssertEqual(linkElement.links.count, 1)
+        XCTAssertEqual(linkElement.text, "A link <a!>here<!a>")
+    }
+    
     func testBlockquoteProcessed() {
         let quote = "> Alls well that ends well"
         let processer = EvergreenProcessor(lines: quote)
-        let elements: Elements = processer.parse()
+        let elements = processer.parse()
         
         let element = elements.first!
         
@@ -212,7 +232,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let quote4 = ">>> In the middle of the night"
         let quote5 = "> To see that his dream had come true"
         let processor = EvergreenProcessor(lines: [quote1, quote2, quote3, quoteBreak, quote4, quote5])
-        let elements: Elements = processor.parse()
+        let elements = processor.parse()
         
         XCTAssertEqual(elements.count, 1)
         
@@ -281,6 +301,7 @@ final class EvergreenProcessorTests: XCTestCase {
         ("testOrderedListProcessor", testOrderedListProcessed),
         ("testUnOrderedListProcessor", testUnOrderedListProcessed),
         ("testSubListsProcessor", testSubListsProcessed),
+        ("testLinksInListsProcessor", testLinksInListsProcessed),
         ("testBlockquoteProcessor", testBlockquoteProcessed),
         ("testSubBlockquoteProcessor", testSubBlockquoteProcessed),
         ("testDivProcessor", testDivProcessed),
