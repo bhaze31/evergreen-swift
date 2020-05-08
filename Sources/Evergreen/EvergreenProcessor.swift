@@ -31,6 +31,10 @@ public class EvergreenProcessor {
     var inDiv = false
     var currentDiv: DivEvergreenElement?
     
+    // MARK: Table Variables
+    var inTable = false
+    var currentTable: TableEvergreenElement?
+    
     // MARK: Regular Expressions
     let listMatch = try! NSRegularExpression(pattern: "^([0-9]+\\.|(-|\\+|\\*))", options: [])
     let orderedMatch = try! NSRegularExpression(pattern: "^[0-9]+\\.", options: [])
@@ -44,21 +48,34 @@ public class EvergreenProcessor {
     let altMatch = try! NSRegularExpression(pattern: "!?\\[.+\\]", options: [])
     let descMatch = try! NSRegularExpression(pattern: "\\(.+\\)", options: [])
     
-    
     let linkMatch = try! NSRegularExpression(pattern: "\\[[\\w\\s\"']+\\]\\([\\w\\s\\/:\\.\"']+\\)", options: [])
     
-    let imageMatch = try! NSRegularExpression(pattern: "^!\\[.+\\]\\(.+\\)$", options: [])
+    let imageMatch = try! NSRegularExpression(pattern: "!\\[.+\\]\\(.+\\)", options: [])
     
     let linkImageMatch = try! NSRegularExpression(pattern: "^\\[!\\[[\\w\\s\"']+\\]\\([\\w\\s\\/:\\.\"']+\\)\\]\\([\\w\\s\\/:\\.\"']+\\)$", options: [])
-    
-    let divMatch = try! NSRegularExpression(pattern: "^<<-[A-Za-z0-9]{3}", options: [])
-    
+
+    let tableMatch = try! NSRegularExpression(pattern: "^\\|[\\w\\s-_\\:\\|]+\\|", options: [])
+    let tableHeaderMatch = try! NSRegularExpression(pattern: "^\\|(\\:?-{3,}\\:?\\|)+$", options: [])
+    let centerTableMatch = try! NSRegularExpression(pattern: "\\:-{3,}\\:", options: [])
+    let leftTableMatch = try! NSRegularExpression(pattern: "\\:-{3,}$", options: [])
+    let rightTableMatch = try! NSRegularExpression(pattern: "^-{3,}\\:", options: [])
+
+    let divMatch = try! NSRegularExpression(pattern: "^<<-[\\s]*[A-Za-z0-9]{3}", options: [])
+
+    let identifierMatch = try! NSRegularExpression(pattern: "\\{[\\w-_\\s\\.#]+\\}$", options: [])
+
+    let parentIdentifierMatch = try! NSRegularExpression(pattern: "\\{\\{[\\w-_\\s\\.#]+\\}\\}$", options: [])
+
+    let iDMatch = try! NSRegularExpression(pattern: "\\#[\\w-_]+", options: [])
+    let classMatch = try! NSRegularExpression(pattern: "\\.[\\w-_]+", options: [])
+
     // MARK: Content
     var lines: [String] = [] {
         didSet {
             elements = Elements()
         }
     }
+
     var elements = Elements()
     
     public init(lines: [String]) {
@@ -68,7 +85,29 @@ public class EvergreenProcessor {
     public init(lines: String) {
         self.lines = lines.components(separatedBy: .newlines)
     }
-    
+
+    func splitIdentifiersFromLine(line: String, matching classType: NSRegularExpression? = nil) -> (String, String?, [String]) {
+        let match = classType ?? identifierMatch
+        var id: String?
+        var classList = [String]()
+        
+        line.stringFromMatch(match)
+            .replaceSubstrings(["{", "}"])
+            .trim()
+            .split(separator: " ")
+            .map { String($0) }
+            .forEach { item in
+                if item.isMatching(classMatch) {
+                    classList.append(item.replaceSubstrings(["."]))
+                } else if item.isMatching(iDMatch) {
+                    id = item.replaceSubstrings(["#"])
+                }
+            }
+        
+        let text = line.removeAll(matching: match).trim()
+        return (text, id, classList)
+    }
+
     func linkParser(line: String, in givenRange: NSRange? = nil) -> (String, String, String?) {
         let range = givenRange ?? line.fullRange()
         let anchorText = line.stringFromMatch(altMatch, in: range).replaceSubstrings(["![", "[", "]"])
@@ -105,23 +144,38 @@ public class EvergreenProcessor {
     // MARK: <h#> Element
     func parseHeader(_ line: String) -> TextEvergreenElement {
         let headerMatch = try! NSRegularExpression(pattern: "^#+", options: [])
-        let range = line.fullRange()
-        let matches = headerMatch.matches(in: line, options: [], range: range)
+        
+        let matches = headerMatch.matches(in: line, options: [], range: line.fullRange())
         let match = matches.first!
         
-        var text = line.replacingOccurrences(of: "#", with: "", options: [], range: Range<String.Index>(match.range, in: line))
-        text = text.trim()
-        
-        let header = TextEvergreenElement(elementType: "h\(match.range.length)", text: text)
+        let originalText = line.replaceAll(matching: headerMatch, with: "").trim()
+
+        let header = TextEvergreenElement(elementType: "h\(match.range.length)", text: originalText)
+
+        if originalText.isMatching(identifierMatch) {
+            let (trimmed, id, classes) = splitIdentifiersFromLine(line: originalText)
+            header.id = id
+            header.classes = classes
+            header.text = trimmed
+        }
+
         parseLinks(element: header)
         return header
     }
     
     // MARK: <p> Element
     func parseParagraphElement(_ line: String) -> TextEvergreenElement {
-        let text = TextEvergreenElement(elementType: "p", text: line)
-        parseLinks(element: text)
-        return text
+        let textElement = TextEvergreenElement(elementType: "p", text: line)
+        
+        if line.isMatching(identifierMatch) {
+            let (trimmed, id, classes) = splitIdentifiersFromLine(line: line)
+            textElement.id = id
+            textElement.classes = classes
+            textElement.text = trimmed
+        }
+
+        parseLinks(element: textElement)
+        return textElement
     }
     
     // MARK: <img /> Element
@@ -156,11 +210,20 @@ public class EvergreenProcessor {
         let text = trimmed.removeAll(matching: listMatch).trim()
         
         let listItem = ListItemEvergreenElement(text)
+        
+        if text.isMatching(identifierMatch) {
+            let (trimmedText, id, classes) = splitIdentifiersFromLine(line: text)
+            listItem.text = trimmedText
+            listItem.id = id
+            listItem.classes = classes
+        }
+
         parseLinks(element: listItem)
         return listItem
     }
     
-    func parseListElement(_ line: String) {
+    func parseListElement(_ originalLine: String) {
+        var line = originalLine
         let listType = nextListType(line)
         let indentRegex = try! NSRegularExpression(pattern: " +", options: [])
         
@@ -178,6 +241,13 @@ public class EvergreenProcessor {
                     
                     // Create a new sublist
                     currentList = listType == .O_LIST ? getOrderedList(parentList) : getUnorderedList(parentList)
+                    
+                    if line.isMatching(parentIdentifierMatch) {
+                        let (trimmedLine, id, classes) = splitIdentifiersFromLine(line: line, matching: parentIdentifierMatch)
+                        currentList?.id = id
+                        currentList?.classes = classes
+                        line = trimmedLine
+                    }
                     
                     // Add sub list to children of previous item
                     listItem.children.append(currentList!)
@@ -213,7 +283,16 @@ public class EvergreenProcessor {
                 currentListIndentLength = indentLength
             }
             
-            currentList?.children.append(parseListItem(line))
+            if line.isMatching(parentIdentifierMatch) {
+                let (trimmedLine, id, classes) = splitIdentifiersFromLine(line: line, matching: parentIdentifierMatch)
+                currentList?.id = id
+                currentList?.classes = classes
+                line = trimmedLine
+                currentList?.children.append(parseListItem(line))
+            } else {
+                currentList?.children.append(parseListItem(line))
+            }
+
             addToElements(currentList!)
         } else {
             currentList?.children.append(parseListItem(line))
@@ -233,7 +312,7 @@ public class EvergreenProcessor {
         let quoteRegex = try! NSRegularExpression(pattern: "^>+", options: [])
         let quoteIndent = quoteRegex.firstMatch(in: line, options: [], range: line.fullRange())!.range.length
         
-        let trimmed = line.removeAll(matching: blockMatch)
+        let trimmed = line.removeAll(matching: blockMatch).trim()
         
         if inBlockquote && currentBlockquoteIndentLength < quoteIndent {
             // Create a new blockquote within the current one
@@ -243,7 +322,14 @@ public class EvergreenProcessor {
             
             parentQuote?.children.append(currentQuote)
             
-            currentQuote.children.append(parseParagraphElement(trimmed))
+            if trimmed.isMatching(parentIdentifierMatch) {
+                let (removedIDText, id, classes) = splitIdentifiersFromLine(line: trimmed, matching: parentIdentifierMatch)
+                currentQuote.children.append(parseParagraphElement(removedIDText))
+                currentQuote.id = id
+                currentQuote.classes = classes
+            } else {
+                currentQuote.children.append(parseParagraphElement(trimmed))
+            }
             
             currentBlockquoteIndentLength = quoteIndent
         } else if inBlockquote && currentBlockquoteIndentLength > quoteIndent {
@@ -266,11 +352,11 @@ public class EvergreenProcessor {
             
             currentBlockquoteIndentLength = quoteIndent
         } else if inBlockquote {
-            // In current blockqupte, check if we should append to current text
+            // In current blockquote, check if we should append to current text
             if trimmed == "" {
                 // We are adding another paragraph element
                 shouldAppendParagraph = true
-            } else if shouldAppendParagraph { // Append to the current quote
+            } else if shouldAppendParagraph {
                 // We have a blank line, create a new paragraph in this blockquote level
                 shouldAppendParagraph = false
                 
@@ -281,8 +367,14 @@ public class EvergreenProcessor {
         } else {
             let blockquote = BlockquoteEvergreenElement()
             
-            let paragraph = parseParagraphElement(trimmed)
-            blockquote.children.append(paragraph)
+            if trimmed.isMatching(parentIdentifierMatch) {
+                let (removedIDText, id, classes) = splitIdentifiersFromLine(line: trimmed, matching: parentIdentifierMatch)
+                blockquote.children.append(parseParagraphElement(removedIDText))
+                blockquote.id = id
+                blockquote.classes = classes
+            } else {
+                blockquote.children.append(parseParagraphElement(trimmed))
+            }
             
             inBlockquote = true
             currentBlockquote = blockquote
@@ -291,10 +383,111 @@ public class EvergreenProcessor {
         }
     }
     
+    // MARK: <table> Element
+    func parseTableElement(_ line: String) {
+        if inTable {
+            // Only convert items to table header if it is the second row
+            if line.isMatching(tableHeaderMatch) && currentTable?.rows.count == 1 {
+                // At this point, we know we are inTable and there is more than 0 rows
+                let headerRow = currentTable!.rows.first!
+                var columns = headerRow.columns
+
+                line.split(separator: "|")
+                    .map { String($0) }
+                    .enumerated()
+                    .forEach { index, item in
+                        let element: TableItemEvergreenElement
+                        if index + 1 > headerRow.columns.count {
+                            element = TableItemEvergreenElement(text: "")
+                            columns.append(element)
+                        } else {
+                            element = headerRow.columns[index]
+                            
+                        }
+                        
+                        element.elementType = "th"
+
+                        if item.isMatching(centerTableMatch) {
+                            element.alignment = .center
+                        } else if item.isMatching(leftTableMatch) {
+                            element.alignment = .left
+                        } else if item.isMatching(rightTableMatch) {
+                            element.alignment = .right
+                        }
+                    }
+
+                headerRow.columns = columns
+                currentTable?.numColumns = headerRow.columns.count
+
+                return
+            }
+            
+            let rowElement = TableRowEvergreenElement()
+            var trimmedLine = line
+
+            if trimmedLine.isMatching(identifierMatch) {
+                let (trimmed, rowId, rowClasses) = splitIdentifiersFromLine(line: line)
+                rowElement.id = rowId
+                rowElement.classes = rowClasses
+                trimmedLine = trimmed
+            }
+            
+            trimmedLine.split(separator: "|").enumerated().forEach { index, item in
+                let column = TableItemEvergreenElement(text: String(item))
+                column.alignment = currentTable?.rows.first?.columns[index].alignment ?? .left
+                rowElement.columns.append(column)
+            }
+            
+            if rowElement.columns.count > (currentTable?.numColumns ?? 0) {
+                currentTable?.numColumns = rowElement.columns.count
+            }
+
+            currentTable?.rows.append(rowElement)
+        } else {
+            let tableElement = TableEvergreenElement()
+            let rowElement = TableRowEvergreenElement()
+
+            var trimmedLine = line
+            if trimmedLine.isMatching(parentIdentifierMatch) {
+                let (trimmed, tableId, tableClasses) = splitIdentifiersFromLine(line: trimmedLine)
+                tableElement.id = tableId
+                tableElement.classes = tableClasses
+                trimmedLine = trimmed
+            }
+
+            if trimmedLine.isMatching(identifierMatch) {
+                let (trimmed, rowId, rowClasses) = splitIdentifiersFromLine(line: line)
+                rowElement.id = rowId
+                rowElement.classes = rowClasses
+                trimmedLine = trimmed
+            }
+
+            trimmedLine.split(separator: "|").forEach { item in
+                rowElement.columns.append(TableItemEvergreenElement(text: String(item)))
+            }
+            
+            tableElement.numColumns = rowElement.columns.count
+            tableElement.rows.append(rowElement)
+            currentTable = tableElement
+            inTable = true
+            addToElements(tableElement)
+        }
+    }
+    
     // MARK: <div> Element
     func parseDivElement(_ line: String) {
-        let identifier = line.replacingOccurrences(of: "<<-", with: "")
-        addToElements(DivEvergreenElement(elementType: "div", identifier: identifier))
+        var identifier = line.replacingOccurrences(of: "<<-", with: "").trim()
+        let divElement = DivEvergreenElement(elementType: "div", identifier: identifier)
+        
+        if identifier.isMatching(identifierMatch) {
+            let (trimmedIdentifier, id, classes) = splitIdentifiersFromLine(line: identifier)
+            divElement.identifier = trimmedIdentifier
+            divElement.id = id
+            divElement.classes = classes
+            identifier = trimmedIdentifier
+        }
+    
+        addToElements(divElement)
     }
     
     // MARK: Handle items in DIV
@@ -339,6 +532,8 @@ public class EvergreenProcessor {
             parseListElement(line)
         } else if line.isMatching(blockMatch, in: range) {
             parseBlockquoteElement(line)
+        } else if line.isMatching(tableMatch) {
+            parseTableElement(line)
         } else if trimmed.count > 0 {
             resetAllSpecialElements()
             addToElements(parseTextElement(trimmed))
@@ -381,5 +576,7 @@ public class EvergreenProcessor {
         self.currentBlockquoteIndentLength = 0
         self.currentSubQuote = 0
         self.shouldAppendParagraph = false
+        
+        self.inTable = false
     }
 }

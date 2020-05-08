@@ -2,7 +2,19 @@ import XCTest
 @testable import Evergreen
 
 final class EvergreenProcessorTests: XCTestCase {
+    
+    func checkClasses(expected: [String], classes: [String]) {
+        XCTAssertEqual(expected.count, classes.count)
+
+        expected.forEach { item in
+            let index = classes.firstIndex(of: item)
+            XCTAssertNotNil(index, "Testing: \(item)")
+            
+        }
+    }
+
     func testHeaderProcessed() {
+        let processor = EvergreenProcessor(lines: [])
         for i in 1...6 {
             var header = ""
             for _ in 1...i {
@@ -11,28 +23,76 @@ final class EvergreenProcessorTests: XCTestCase {
             
             header += " A header ###"
             
-            let processor = EvergreenProcessor(lines: header)
+            processor.updateLines(lines: [header])
             
             let elements = processor.parse()
-            let element = elements.first!
-            let textElement = element as! TextEvergreenElement
-
+            let textElement = elements.first as! TextEvergreenElement
+            
             XCTAssertEqual(textElement.text, "A header ###")
             XCTAssertEqual(textElement.elementType, "h\(i)")
         }
+        
+        let headerWithID = "# Hello Old Friend {#clapton}"
+        processor.updateLines(lines: [headerWithID])
+        
+        var elements = processor.parse()
+        var textElement = elements.first as! TextEvergreenElement
+        
+        XCTAssertEqual(textElement.text, "Hello Old Friend")
+        XCTAssertEqual(textElement.id, "clapton")
+        
+        let headerWithClasses = "# Riding with the King {.clapton .bb}"
+        processor.updateLines(lines: [headerWithClasses])
+        
+        elements = processor.parse()
+        textElement = elements.first as! TextEvergreenElement
+        
+        XCTAssertEqual(textElement.text, "Riding with the King")
+        checkClasses(expected: ["clapton", "bb"], classes: textElement.classes)
+        
+        let headerWithIdAndClasses = "# Layla {.clapton .derek #blues}"
+        processor.updateLines(lines: [headerWithIdAndClasses])
+        
+        elements = processor.parse()
+        textElement = elements.first as! TextEvergreenElement
+        
+        XCTAssertEqual(textElement.text, "Layla")
+        XCTAssertEqual(textElement.id, "blues")
+        checkClasses(expected: ["clapton", "derek"], classes: textElement.classes)
     }
     
     func testParagraphProcessed() {
         let paragraph = "A paragraph"
+        let paragraphWithID = "Another paragraph {#with_id}"
+        let paragraphWithClasses = "A third paragraph {.classy .list}"
+        let paragraphWithIDAndClasses = "A last paragraph {.whats .happenin #baskins}"
         
-        let processor = EvergreenProcessor(lines: paragraph)
+        let processor = EvergreenProcessor(lines: [paragraph, paragraphWithID, paragraphWithClasses, paragraphWithIDAndClasses])
         let elements = processor.parse()
         let element = elements.first
         
-        let textElement = element as! TextEvergreenElement
+        var textElement = element as! TextEvergreenElement
         
         XCTAssertEqual(textElement.text, paragraph)
         XCTAssertEqual(textElement.elementType, "p")
+        XCTAssertEqual(textElement.id, nil)
+        
+        textElement = elements[1] as! TextEvergreenElement
+        XCTAssertEqual(textElement.text, "Another paragraph")
+        XCTAssertEqual(textElement.elementType, "p")
+        XCTAssertEqual(textElement.id, "with_id")
+        
+        textElement = elements[2] as! TextEvergreenElement
+        XCTAssertEqual(textElement.text, "A third paragraph")
+        XCTAssertEqual(textElement.elementType, "p")
+        XCTAssertEqual(textElement.id, nil)
+        checkClasses(expected: ["classy", "list"], classes: textElement.classes)
+        
+        textElement = elements[3] as! TextEvergreenElement
+        XCTAssertEqual(textElement.text, "A last paragraph")
+        XCTAssertEqual(textElement.elementType, "p")
+        XCTAssertEqual(textElement.id, "baskins")
+        checkClasses(expected: ["whats", "happenin"], classes: textElement.classes)
     }
     
     func testLinkInParagraphProcessed() {
@@ -112,7 +172,7 @@ final class EvergreenProcessorTests: XCTestCase {
     }
     
     func testOrderedListProcessed() {
-        let listItem1 = "1. Hello"
+        let listItem1 = "1. Hello {#Item .class .classes .classed} {{#List .outerClass}}"
         let listItem2 = "1. Wow"
         
         let processor = EvergreenProcessor(lines: [listItem1, listItem2])
@@ -122,10 +182,20 @@ final class EvergreenProcessorTests: XCTestCase {
         XCTAssertEqual(elements.count, 1)
             
         let element = elements.first as! ListEvergreenElement
-        let children = element.children
         
+        XCTAssertEqual(element.id, "List")
+        checkClasses(expected: ["outerClass"], classes: element.classes)
+        
+        let children = element.children
+
         XCTAssertEqual(element.elementType, "ol")
         XCTAssertEqual(children.count, 2)
+        
+        let firstItem = children.first as! ListItemEvergreenElement
+
+        XCTAssertEqual(firstItem.id, "Item")
+        XCTAssertEqual(firstItem.text, "Hello")
+        checkClasses(expected: ["class", "classes", "classed"], classes: firstItem.classes)
     }
     
     func testUnOrderedListProcessed() {
@@ -250,6 +320,48 @@ final class EvergreenProcessorTests: XCTestCase {
         XCTAssertEqual(subSubBlockquote.children.count, 2)
     }
     
+    func testBlockquotesWithIDs() {
+        let quote1 = "> There once was a man from peru {#title1 .count .of .items} {{#blockquote1 .base_case}}"
+        let quote2 = ">> Who dreamed he was eating his shoe"
+        let quote3 = ">>> He woke with a fright {#subtitle .subliminal} {{#splitted .message}}"
+        let quoteBreak = ">>> {{#remaining .valued}}"
+        let quote4 = ">>> In the middle of the night"
+        let quote5 = "> To see that his dream had come true {{#bad_id .not_valued}}"
+        let processor = EvergreenProcessor(lines: [quote1, quote2, quote3, quoteBreak, quote4, quote5])
+        let elements = processor.parse()
+        
+        XCTAssertEqual(elements.count, 1)
+        
+        let blockQuote = elements.first as! BlockquoteEvergreenElement
+        XCTAssertEqual(blockQuote.elementType, "blockquote")
+        XCTAssertEqual(blockQuote.id, "blockquote1")
+        checkClasses(expected: ["base_case"], classes: blockQuote.classes)
+        
+        XCTAssertEqual(blockQuote.children.count, 3)
+        XCTAssertEqual(blockQuote.children.first?.elementType, "p")
+        XCTAssertEqual(blockQuote.children.first?.id, "title1")
+        checkClasses(expected: ["count", "of", "items"], classes: blockQuote.children.first!.classes)
+        
+        
+        let finalElement = blockQuote.children.last as! TextEvergreenElement
+        XCTAssertEqual(finalElement.elementType, "p")
+        XCTAssertEqual(finalElement.id, nil)
+        XCTAssertEqual(finalElement.text, "To see that his dream had come true {{#bad_id .not_valued}}")
+        
+        let subBlockquote = blockQuote.children[1] as! BlockquoteEvergreenElement
+        XCTAssertEqual(subBlockquote.elementType, "blockquote")
+        XCTAssertEqual(subBlockquote.children.count, 2)
+        
+        let subSubBlockquote = subBlockquote.children.last as! BlockquoteEvergreenElement
+        // Since we do not parse #|>> remaining, it should be one paragraph
+        XCTAssertEqual(subSubBlockquote.children.count, 1)
+        XCTAssertEqual(subSubBlockquote.id, "splitted")
+        checkClasses(expected: ["message"], classes: subSubBlockquote.classes)
+
+        XCTAssertEqual(subSubBlockquote.children.first?.id, "subtitle")
+        checkClasses(expected: ["subliminal"], classes: subSubBlockquote.children.first!.classes)
+    }
+    
     func testDivProcessed() {
         let divOpen = "<<-DIV"
         let data = "In a div"
@@ -265,6 +377,23 @@ final class EvergreenProcessorTests: XCTestCase {
         XCTAssertEqual(divElement.identifier, "DIV")
         XCTAssertEqual(divElement.children.count, 1)
         XCTAssertEqual(divElement.children.first?.elementType, "p")
+    }
+    
+    func testDivWithIDProcessed() {
+        let divOpen = "<<- DIV {#main .tribal}"
+        let data = "In a div with an ID"
+        let divClass = "<<-DIV"
+        
+        let processor = EvergreenProcessor(lines: [divOpen, data, divClass])
+        
+        let elements = processor.parse()
+        
+        let divElement = elements.first as! DivEvergreenElement
+        
+        XCTAssertEqual(divElement.elementType, "div")
+        XCTAssertEqual(divElement.identifier, "DIV")
+        XCTAssertEqual(divElement.id, "main")
+        checkClasses(expected: ["tribal"], classes: divElement.classes)
     }
     
     func testSubDivProcessed() {
@@ -292,6 +421,39 @@ final class EvergreenProcessorTests: XCTestCase {
         XCTAssertEqual(subDiv.children.count, 1)
     }
 
+    func testTableProcessed() {
+        let tableHeader = "|a|kitchen|table|{#id .class}"
+        let tableDashes = "|:---|:---:|---:|"
+        let tableData = "|in|the|bedroom|"
+        
+        let processor = EvergreenProcessor(lines: [tableHeader, tableDashes, tableData])
+        
+        let elements = processor.parse()
+        let table = elements.first as! TableEvergreenElement
+        XCTAssertEqual(table.rows.count, 2)
+        XCTAssertEqual(table.numColumns, 3)
+        
+        let headerRow = table.rows.first!
+        headerRow.columns.forEach { column in
+            XCTAssertEqual(column.elementType, "th")
+        }
+        
+        let dataRow = table.rows.last!
+        dataRow.columns.forEach { column in
+            XCTAssertEqual(column.elementType, "td")
+        }
+        
+        let alignments: [TableAlignment] = [.left, .center, .right]
+        
+        alignments.enumerated().forEach { index, alignment in
+            XCTAssertEqual(headerRow.columns[index].alignment, alignment)
+        }
+        
+        alignments.enumerated().forEach { index, alignment in
+            XCTAssertEqual(dataRow.columns[index].alignment, alignment)
+        }
+    }
+
     static var allTests = [
         ("testHeaderProcessor", testHeaderProcessed),
         ("testParagraphProcessor", testParagraphProcessed),
@@ -305,6 +467,8 @@ final class EvergreenProcessorTests: XCTestCase {
         ("testBlockquoteProcessor", testBlockquoteProcessed),
         ("testSubBlockquoteProcessor", testSubBlockquoteProcessed),
         ("testDivProcessor", testDivProcessed),
-        ("testSubDivProcessor", testSubDivProcessed)
+        ("testDivWithIDProcessor", testDivWithIDProcessed),
+        ("testSubDivProcessor", testSubDivProcessed),
+        ("textTableProcessor", testTableProcessed)
     ]
 }

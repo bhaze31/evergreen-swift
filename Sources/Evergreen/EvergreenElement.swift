@@ -85,7 +85,7 @@ public class BlockquoteEvergreenElement: EvergreenElement {
     }
 }
 
-public class LinkEvergreenElement {
+public class LinkEvergreenElement: EvergreenElement {
     var text: String
     var href: String
     var title: String?
@@ -94,6 +94,36 @@ public class LinkEvergreenElement {
         self.text = text
         self.href = href
         self.title = title
+        super.init(elementType: "a")
+    }
+}
+
+public class TableEvergreenElement: EvergreenElement {
+    var rows: [TableRowEvergreenElement] = []
+    var numColumns: Int = 0
+    
+    init() {
+        super.init(elementType: "table")
+    }
+}
+
+public class TableRowEvergreenElement: EvergreenElement {
+    var columns: [TableItemEvergreenElement] = []
+    
+    init() {
+        super.init(elementType: "tr")
+    }
+}
+
+public enum TableAlignment: String {
+    case left, center, right
+}
+
+public class TableItemEvergreenElement: TextEvergreenElement {
+    var alignment: TableAlignment = .left
+
+    init(text: String) {
+        super.init(elementType: "td", text: text)
     }
 }
 

@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  
+//  Evergreen+String.swift
+//
 //
 //  Created by Brian Hasenstab on 4/20/20.
 //
@@ -39,10 +39,10 @@ extension String {
         guard let match = matching.firstMatch(in: self, options: options, range: fullRange()) else {
             return self
         }
-        
+
         return matching.stringByReplacingMatches(in: self, options: options, range: match.range, withTemplate: template)
     }
-    
+
     /// Removes all instances of `matching`
     ///
     /// Use this method to remove all instances of matching within the given String
@@ -55,7 +55,7 @@ extension String {
     func removeAll(matching: NSRegularExpression, options: NSRegularExpression.MatchingOptions = []) -> String {
         return replaceAll(matching: matching, with: "", options: options)
     }
-    
+
     /// Replace matches of strings with the given replacement
     ///
     /// Used to replace multiple substrings at the same time
@@ -64,7 +64,7 @@ extension String {
     /// - Parameters with: String to replace with, defaults to ""
     ///
     /// - Returns: String with any replaced matches
-    
+
     func replaceSubstrings(_ items: [String], with: String = "") -> String {
         var tempString = self
 
@@ -74,7 +74,7 @@ extension String {
 
         return tempString
     }
-    
+
     /// Checks if a String has a match
     ///
     /// Use this method to determine if there is at least one match from the regular expression
@@ -91,10 +91,10 @@ extension String {
         if let _ = match.firstMatch(in: self, options: options, range: range) {
             return true
         }
-        
+
         return false
     }
-    
+
     /// Returns the string from the first match
     ///
     /// Overrides the trimmingCharacters(in:) on String to default to removing whitespace
@@ -112,7 +112,7 @@ extension String {
         }
         return String(self[Range(match.range, in: self)!])
     }
-    
+
     /// Remove characters from the given set
     ///
     /// Overrides the trimmingCharacters(in:) on String to default to removing whitespace
@@ -124,7 +124,7 @@ extension String {
     func trim(_ characters: CharacterSet = .whitespacesAndNewlines) -> String {
         return self.trimmingCharacters(in: characters)
     }
-    
+
     /// Return an NSRange for the full length of the given string
     ///
     /// - Returns: NSRange from 0 to count of characters

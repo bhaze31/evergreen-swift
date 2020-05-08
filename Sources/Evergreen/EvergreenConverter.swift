@@ -32,6 +32,41 @@ public class EvergreenConverter {
         return imageStringElement + " />"
     }
     
+    func createTableElement(element: TableEvergreenElement) -> String {
+        var table = "<table"
+        if element.classes.count > 0 {
+            table += " class=\"\(element.classes.joined(separator: " "))\""
+        }
+        
+        if let id = element.id {
+            table += " id=\"\(id)\""
+        }
+        
+        table += ">"
+        
+        if element.rows.count > 0 {
+            element.rows.forEach { row in
+                var rowElement = "<tr>"
+                row.columns.forEach { column in
+                    var td = "<\(column.elementType) style=\"text-align:\(column.alignment);\""
+                    if column.classes.count > 0 {
+                        td += " class=\"\(column.classes.joined(separator: " "))"
+                    }
+                    
+                    if let id = column.id {
+                        td += " id=\"\(id)\""
+                    }
+                    
+                    rowElement += td + ">" + column.text + "</td>"
+                }
+                rowElement += "</tr>"
+                table += rowElement
+            }
+        }
+        
+        return table + "</table>"
+    }
+    
     func createAnchorReplacement(element: LinkEvergreenElement) -> String {
         var anchor = "<a href=\"\(element.href)\""
         if let title = element.title {
@@ -48,6 +83,10 @@ public class EvergreenConverter {
         
         if selfClosingElements.contains(element.elementType) {
             return "<\(element.elementType) />"
+        }
+        
+        if let tableElement = element as? TableEvergreenElement {
+            return createTableElement(element: tableElement)
         }
         
         var stringElement = "<\(element.elementType)"

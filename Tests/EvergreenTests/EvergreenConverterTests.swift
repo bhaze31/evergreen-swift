@@ -128,6 +128,20 @@ final class EvergreenConverterTests: XCTestCase {
         
         XCTAssertEqual(result, expectedResult)
     }
+    
+    func testTableElementConverted() {
+        let tableHeader = "|a|kitchen|table|{#id .class}"
+        let tableDashes = "|:---|:---:|---:|"
+        let tableData = "|in|the|bedroom|"
+        
+        let processor = EvergreenProcessor(lines: [tableHeader, tableDashes, tableData])
+        
+        let elements = processor.parse()
+        
+        let converter = EvergreenConverter(elements: elements)
+        let result = converter.convert()
+        XCTAssertEqual(result, "<table><tr><th style=\"text-align:left;\">a</td><th style=\"text-align:center;\">kitchen</td><th style=\"text-align:right;\">table</td></tr><tr><td style=\"text-align:left;\">in</td><td style=\"text-align:center;\">the</td><td style=\"text-align:right;\">bedroom</td></tr></table>")
+    }
 
     static var allTests = [
         ("testImageConverter", testImageConverted),
