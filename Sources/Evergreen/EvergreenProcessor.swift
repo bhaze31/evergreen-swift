@@ -449,14 +449,14 @@ public class EvergreenProcessor {
 
             var trimmedLine = line
             if trimmedLine.isMatching(parentIdentifierMatch) {
-                let (trimmed, tableId, tableClasses) = splitIdentifiersFromLine(line: trimmedLine)
+                let (trimmed, tableId, tableClasses) = splitIdentifiersFromLine(line: trimmedLine, matching: parentIdentifierMatch)
                 tableElement.id = tableId
                 tableElement.classes = tableClasses
                 trimmedLine = trimmed
             }
 
             if trimmedLine.isMatching(identifierMatch) {
-                let (trimmed, rowId, rowClasses) = splitIdentifiersFromLine(line: line)
+                let (trimmed, rowId, rowClasses) = splitIdentifiersFromLine(line: trimmedLine)
                 rowElement.id = rowId
                 rowElement.classes = rowClasses
                 trimmedLine = trimmed

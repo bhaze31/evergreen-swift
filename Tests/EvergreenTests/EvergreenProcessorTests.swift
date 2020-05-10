@@ -422,9 +422,9 @@ final class EvergreenProcessorTests: XCTestCase {
     }
 
     func testTableProcessed() {
-        let tableHeader = "|a|kitchen|table|{#id .class}"
+        let tableHeader = "|a|kitchen|table|{#id .class} {{#parent .pClass}}"
         let tableDashes = "|:---|:---:|---:|"
-        let tableData = "|in|the|bedroom|"
+        let tableData = "|in|the|bedroom|{#tr .data}"
         
         let processor = EvergreenProcessor(lines: [tableHeader, tableDashes, tableData])
         
@@ -432,13 +432,19 @@ final class EvergreenProcessorTests: XCTestCase {
         let table = elements.first as! TableEvergreenElement
         XCTAssertEqual(table.rows.count, 2)
         XCTAssertEqual(table.numColumns, 3)
+        XCTAssertEqual(table.id, "parent")
+        checkClasses(expected: ["pClass"], classes: table.classes)
         
         let headerRow = table.rows.first!
+        XCTAssertEqual(headerRow.id, "id")
+        checkClasses(expected: ["class"], classes: headerRow.classes)
         headerRow.columns.forEach { column in
             XCTAssertEqual(column.elementType, "th")
         }
         
         let dataRow = table.rows.last!
+        XCTAssertEqual(dataRow.id, "tr")
+        checkClasses(expected: ["data"], classes: dataRow.classes)
         dataRow.columns.forEach { column in
             XCTAssertEqual(column.elementType, "td")
         }
@@ -469,6 +475,6 @@ final class EvergreenProcessorTests: XCTestCase {
         ("testDivProcessor", testDivProcessed),
         ("testDivWithIDProcessor", testDivWithIDProcessed),
         ("testSubDivProcessor", testSubDivProcessed),
-        ("textTableProcessor", testTableProcessed)
+        ("testTableProcessor", testTableProcessed)
     ]
 }
