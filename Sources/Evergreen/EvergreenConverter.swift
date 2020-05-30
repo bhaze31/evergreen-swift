@@ -46,9 +46,21 @@ public class EvergreenConverter {
         
         if element.rows.count > 0 {
             element.rows.forEach { row in
-                var rowElement = "<tr>"
+                var rowElement = "<tr"
+                
+                if row.classes.count > 0 {
+                    rowElement += " class=\"\(row.classes.joined(separator: " "))\""
+                }
+
+                if let id = row.id {
+                    rowElement += " id=\"\(id)\""
+                }
+                
+                rowElement += ">"
+
                 row.columns.forEach { column in
                     var td = "<\(column.elementType) style=\"text-align:\(column.alignment);\""
+
                     if column.classes.count > 0 {
                         td += " class=\"\(column.classes.joined(separator: " "))"
                     }

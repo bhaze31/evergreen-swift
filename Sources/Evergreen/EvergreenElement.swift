@@ -102,6 +102,17 @@ public class TableEvergreenElement: EvergreenElement {
     var rows: [TableRowEvergreenElement] = []
     var numColumns: Int = 0
     
+    override var children: [EvergreenElement] {
+        get {
+            return rows
+        }
+        
+        set {
+            super.children = newValue
+            rows = newValue.map { $0 as! TableRowEvergreenElement }
+        }
+    }
+    
     init() {
         super.init(elementType: "table")
     }
@@ -109,7 +120,15 @@ public class TableEvergreenElement: EvergreenElement {
 
 public class TableRowEvergreenElement: EvergreenElement {
     var columns: [TableItemEvergreenElement] = []
-    
+    override var children: [EvergreenElement] {
+        get {
+            return columns
+        }
+        
+        set {
+            super.children = newValue
+        }
+    }
     init() {
         super.init(elementType: "tr")
     }

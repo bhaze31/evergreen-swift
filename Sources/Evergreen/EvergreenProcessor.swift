@@ -402,7 +402,6 @@ public class EvergreenProcessor {
                             columns.append(element)
                         } else {
                             element = headerRow.columns[index]
-                            
                         }
                         
                         element.elementType = "th"

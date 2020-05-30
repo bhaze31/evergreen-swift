@@ -21,9 +21,28 @@ final class EvergreenConverterTests: XCTestCase {
     func testParagraphConverted() {
         let paragraphElement = TextEvergreenElement(elementType: "p", text: "A test")
         let converter = EvergreenConverter(elements: [paragraphElement])
-        let result = converter.convert()
+        var result = converter.convert()
         
         XCTAssertEqual(result, "<p>A test</p>")
+        
+        let paragraphWithIdentifiers = TextEvergreenElement(elementType: "p", text: "An id test")
+        paragraphWithIdentifiers.id = "test"
+        converter.updateElements(elements: [paragraphWithIdentifiers])
+        result = converter.convert()
+        
+        XCTAssertEqual(result, "<p id=\"test\">An id test</p>")
+        
+        paragraphWithIdentifiers.classes = ["c1", "c2"]
+        converter.updateElements(elements: [paragraphWithIdentifiers])
+        result = converter.convert()
+
+        XCTAssertEqual(result, "<p class=\"c1 c2\" id=\"test\">An id test</p>")
+        
+        paragraphWithIdentifiers.id = nil
+        converter.updateElements(elements: [paragraphWithIdentifiers])
+        result = converter.convert()
+        
+        XCTAssertEqual(result, "<p class=\"c1 c2\">An id test</p>")
     }
     
     func testHeaderConverted() {
@@ -130,9 +149,9 @@ final class EvergreenConverterTests: XCTestCase {
     }
     
     func testTableElementConverted() {
-        let tableHeader = "|a|kitchen|table|{#id .class}"
+        let tableHeader = "|a|kitchen|table|{#id .class} {{#parent .parentClass}}"
         let tableDashes = "|:---|:---:|---:|"
-        let tableData = "|in|the|bedroom|"
+        let tableData = "|in|the|bedroom|{#dataID .dataClass}"
         
         let processor = EvergreenProcessor(lines: [tableHeader, tableDashes, tableData])
         
@@ -140,7 +159,7 @@ final class EvergreenConverterTests: XCTestCase {
         
         let converter = EvergreenConverter(elements: elements)
         let result = converter.convert()
-        XCTAssertEqual(result, "<table><tr><th style=\"text-align:left;\">a</td><th style=\"text-align:center;\">kitchen</td><th style=\"text-align:right;\">table</td></tr><tr><td style=\"text-align:left;\">in</td><td style=\"text-align:center;\">the</td><td style=\"text-align:right;\">bedroom</td></tr></table>")
+        XCTAssertEqual(result, "<table class=\"parentClass\" id=\"parent\"><tr class=\"class\" id=\"id\"><th style=\"text-align:left;\">a</td><th style=\"text-align:center;\">kitchen</td><th style=\"text-align:right;\">table</td></tr><tr class=\"dataClass\" id=\"dataID\"><td style=\"text-align:left;\">in</td><td style=\"text-align:center;\">the</td><td style=\"text-align:right;\">bedroom</td></tr></table>")
     }
 
     static var allTests = [
