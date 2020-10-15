@@ -75,16 +75,18 @@ final class EvergreenConverterTests: XCTestCase {
     }
     
     func testLinkElementConverted() {
-        let paragraphElement = EvergreenElement(elementType: "p", text: "A paragraph <a!>that<!a> has at least <a!>two<!a> links.")
+        let paragraphElement = EvergreenElement(elementType: "p", text: "A paragraph abcdef has at least zyxwvut links.")
         let firstLinkElement = EvergreenElement(elementType: "a", src: "a-link-1", alt: "that", title: "title 1")
+        firstLinkElement.identifier = "abcdef"
         let secondLinkElement = EvergreenElement(elementType: "a", src: "a-link-2", alt: "two", title: nil)
-        paragraphElement.links = [firstLinkElement, secondLinkElement]
+        secondLinkElement.identifier = "zyxwvut"
+        paragraphElement.children = [firstLinkElement, secondLinkElement]
         let converter = EvergreenConverter(elements: [paragraphElement])
         
         let result = converter.convert()
         
         let expectedResult = "<p>A paragraph <a href=\"a-link-1\" title=\"title 1\">that</a> has at least <a href=\"a-link-2\">two</a> links.</p>"
-
+        
         XCTAssertEqual(result, expectedResult)
     }
     
@@ -120,8 +122,9 @@ final class EvergreenConverterTests: XCTestCase {
     
     func testLinksInListItems() {
         let linkItem = EvergreenElement(elementType: "a", src: "a-link", alt: "here", title: "title-1")
-        let listItem = EvergreenElement(elementType: "li", text: "A link <a!>here<!a>")
-        listItem.links = [linkItem]
+        linkItem.identifier = "abcdefg"
+        let listItem = EvergreenElement(elementType: "li", text: "A link abcdefg")
+        listItem.children = [linkItem]
         let orderedList = EvergreenElement(elementType: "ol")
         orderedList.children = [listItem]
         

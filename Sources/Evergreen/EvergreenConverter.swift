@@ -27,9 +27,33 @@ public class EvergreenConverter {
         if text.isMatching(boldReplacement) {
             updatedText = updateBoldElement(text: text)
         }
-
         
         return updatedText
+    }
+    
+    func setClassesAndId(element: EvergreenElement, line _line: String) -> String {
+        var line = _line
+        if element.classes.count > 0 {
+            line += " class=\"\(element.classes.joined(separator: " "))\""
+        }
+        
+        if let id = element.id {
+            line += " id=\"\(id)\""
+        }
+        
+        return line
+    }
+    
+    func createAnchorElement(element: EvergreenElement) -> String {
+        let href = element.src ?? ""
+        let text = element.alt ?? ""
+        var anchorStringElement = "<a href=\"\(href)\" "
+        
+        if let title = element.title {
+            anchorStringElement += "title=\"\(title)\" "
+        }
+        
+        return setClassesAndId(element: element, line: anchorStringElement).trim() + ">\(text)</a>"
     }
     
     func createImageElement(element: EvergreenElement) -> String {
@@ -40,16 +64,8 @@ public class EvergreenConverter {
         if let title = element.title {
             imageStringElement += " title=\"\(title)\""
         }
-
-        if element.classes.count > 0 {
-            imageStringElement += " class=\"\(element.classes.joined(separator: " "))\""
-        }
         
-        if let id = element.id {
-            imageStringElement += " id=\"\(id)\""
-        }
-        
-        return imageStringElement + " />"
+        return setClassesAndId(element: element, line: imageStringElement).trim() + " />"
     }
     
     func createTableElement(element: EvergreenElement) -> String {
@@ -129,6 +145,15 @@ public class EvergreenConverter {
             return createImageElement(element: element)
         }
         
+        if element.elementType == "a" {
+            let anchorElement = createAnchorElement(element: element)
+            guard let identifier = element.identifier, let parent = element.parent else {
+                return anchorElement
+            }
+                
+            parent.text = parent.text.replacingOccurrences(of: identifier, with: anchorElement)
+        }
+        
         var stringElement = "<\(element.elementType)"
         
         if element.classes.count > 0 {
@@ -143,17 +168,15 @@ public class EvergreenConverter {
         
         if !element.text.isEmpty {
             stringElement += processText(text: element.text)
-            if element.links.count > 0 {
-                for link in element.links {
-                    let stringLink = createAnchorReplacement(element: link)
-                    let replacement = link.alt ?? ""
-                    stringElement = stringElement.replacingOccurrences(of: "<a!>\(replacement)<!a>", with: stringLink)
-                }
-            }
         }
         
         for childElement in element.children {
-            stringElement += createElement(element: childElement)
+            if let identifier = childElement.identifier {
+                let child = createElement(element: childElement)
+                stringElement = stringElement.replacingOccurrences(of: identifier, with: child)
+            } else {
+                stringElement += createElement(element: childElement)
+            }
         }
         
         return stringElement + "</\(element.elementType)>"
