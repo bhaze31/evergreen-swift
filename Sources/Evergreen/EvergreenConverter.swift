@@ -5,8 +5,11 @@
 //  Created by Brian Hasenstab on 4/10/20.
 //
 
+import Foundation
+
 public class EvergreenConverter {
     let selfClosingElements = ["hr", "br"]
+    let boldReplacement = try! NSRegularExpression(pattern: "<b!>.*<!b>", options: [])
     
     var elements: [EvergreenElement]
     
@@ -14,8 +17,25 @@ public class EvergreenConverter {
         self.elements = elements
     }
     
-    func createImageElement(element: ImageEvergreenElement) -> String {
-        var imageStringElement = "<img src=\"\(element.src)\" alt=\"\(element.alt)\""
+    func updateBoldElement(text: String) -> String {
+        
+        return text
+    }
+    
+    func processText(text: String) -> String {
+        var updatedText = text
+        if text.isMatching(boldReplacement) {
+            updatedText = updateBoldElement(text: text)
+        }
+
+        
+        return updatedText
+    }
+    
+    func createImageElement(element: EvergreenElement) -> String {
+        let src = element.src ?? ""
+        let alt = element.alt ?? ""
+        var imageStringElement = "<img src=\"\(src)\" alt=\"\(alt)\""
         
         if let title = element.title {
             imageStringElement += " title=\"\(title)\""
@@ -32,7 +52,7 @@ public class EvergreenConverter {
         return imageStringElement + " />"
     }
     
-    func createTableElement(element: TableEvergreenElement) -> String {
+    func createTableElement(element: EvergreenElement) -> String {
         var table = "<table"
         if element.classes.count > 0 {
             table += " class=\"\(element.classes.joined(separator: " "))\""
@@ -44,8 +64,8 @@ public class EvergreenConverter {
         
         table += ">"
         
-        if element.rows.count > 0 {
-            element.rows.forEach { row in
+        if element.children.count > 0 {
+            element.children.forEach { row in
                 var rowElement = "<tr"
                 
                 if row.classes.count > 0 {
@@ -58,7 +78,9 @@ public class EvergreenConverter {
                 
                 rowElement += ">"
 
-                row.columns.forEach { column in
+                row.children.forEach { column in
+                    let column = column
+
                     var td = "<\(column.elementType) style=\"text-align:\(column.alignment);\""
 
                     if column.classes.count > 0 {
@@ -79,26 +101,32 @@ public class EvergreenConverter {
         return table + "</table>"
     }
     
-    func createAnchorReplacement(element: LinkEvergreenElement) -> String {
-        var anchor = "<a href=\"\(element.href)\""
+    func createAnchorReplacement(element: EvergreenElement) -> String {
+        let src = element.src ?? ""
+        var anchor = "<a href=\"\(src)\""
         if let title = element.title {
             anchor += " title=\"\(title)\""
         }
         
-        return anchor + ">\(element.text)</a>"
+        let text = element.alt ?? ""
+        return anchor + ">\(text)</a>"
     }
     
     func createElement(element: EvergreenElement) -> String {
-        if let imageElement = element as? ImageEvergreenElement {
-            return createImageElement(element: imageElement)
+        if element.elementType == "i" {
+            return createImageElement(element: element)
         }
         
         if selfClosingElements.contains(element.elementType) {
             return "<\(element.elementType) />"
         }
         
-        if let tableElement = element as? TableEvergreenElement {
-            return createTableElement(element: tableElement)
+        if element.elementType == "table" {
+            return createTableElement(element: element)
+        }
+        
+        if element.elementType == "img" {
+            return createImageElement(element: element)
         }
         
         var stringElement = "<\(element.elementType)"
@@ -113,12 +141,13 @@ public class EvergreenConverter {
         
         stringElement += ">"
         
-        if let textElement = element as? TextEvergreenElement {
-            stringElement += textElement.text
-            if textElement.links.count > 0 {
-                for link in textElement.links {
+        if !element.text.isEmpty {
+            stringElement += processText(text: element.text)
+            if element.links.count > 0 {
+                for link in element.links {
                     let stringLink = createAnchorReplacement(element: link)
-                    stringElement = stringElement.replacingOccurrences(of: "<a!>\(link.text)<!a>", with: stringLink)
+                    let replacement = link.alt ?? ""
+                    stringElement = stringElement.replacingOccurrences(of: "<a!>\(replacement)<!a>", with: stringLink)
                 }
             }
         }
@@ -135,7 +164,7 @@ public class EvergreenConverter {
     }
     
     public func convert() -> String {
-        return elements.map { element in createElement(element: element) }.joined(separator: "")
+        return elements.map { element in createElement(element: element) }.joined(separator: "\n")
     }
 }
 

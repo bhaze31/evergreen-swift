@@ -35,12 +35,10 @@ extension String {
     ///
     /// - Returns: The new string with the first match, if applicable, replaced
 
-    func replaceFirst(matching: NSRegularExpression, with template: String, options: NSRegularExpression.MatchingOptions = []) -> String {
-        guard let match = matching.firstMatch(in: self, options: options, range: fullRange()) else {
-            return self
-        }
+    func replaceFirst(matching: NSRegularExpression, with template: String, in range: NSRange? = nil, options: NSRegularExpression.MatchingOptions = []) -> String {
+        let matchedRange = range ?? fullRange()
 
-        return matching.stringByReplacingMatches(in: self, options: options, range: match.range, withTemplate: template)
+        return matching.stringByReplacingMatches(in: self, options: options, range: matchedRange, withTemplate: template)
     }
 
     /// Removes all instances of `matching`
@@ -107,6 +105,7 @@ extension String {
 
     func stringFromMatch(_ regex: NSRegularExpression, in range: NSRange? = nil, options: NSRegularExpression.MatchingOptions = []) -> String {
         let matchRange = range ?? fullRange()
+
         guard let match = regex.firstMatch(in: self, options: options, range: matchRange) else {
             return ""
         }
