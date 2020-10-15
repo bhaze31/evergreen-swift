@@ -131,17 +131,19 @@ public class EvergreenProcessor {
     // MARK: <a> Element
     func parseLinks(element: EvergreenElement) {
         var lineCopy = element.text
-        var links = [EvergreenElement]()
         
         while let match = linkMatch.firstMatch(in: lineCopy, options: [], range: lineCopy.fullRange()) {
             let (anchorText, href, altText) = linkParser(line: lineCopy, in: match.range)
-
-            links.append(EvergreenElement(elementType: "a", src: href, alt: altText, title: anchorText))
             
-            lineCopy = lineCopy.replaceFirst(matching: linkMatch, with: "<a!>\(anchorText.trim())<!a>", in: match.range)
+            let identifier = UUID()
+            let link = EvergreenElement(elementType: "a", src: href, alt: altText, title: anchorText)
+            link.identifier = identifier.uuidString
+        
+            element.children.append(link)
+            
+            lineCopy = lineCopy.replaceFirst(matching: linkMatch, with: identifier.uuidString, in: match.range)
         }
         
-        element.links = links
         element.text = lineCopy
     }
     

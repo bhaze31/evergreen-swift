@@ -9,7 +9,6 @@ public class EvergreenElement {
     var elementType: String
     var parent: EvergreenElement?
     var children: [EvergreenElement] = []
-    var links: [EvergreenElement] = []
     
     var id: String?
     var classes: [String] = []

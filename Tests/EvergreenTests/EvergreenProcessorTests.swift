@@ -116,11 +116,12 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let element = elements.first!
         
-        XCTAssertEqual(element.text, "A paragraph <a!>that<!a> has at least <a!>two<!a> links.")
-        XCTAssertEqual(element.links.count, 2)
-        
-        let firstLink = element.links.first!
-        let secondLink = element.links.last!
+        XCTAssertEqual(element.children.count, 2)
+
+        let firstLink = element.children.first!
+        let secondLink = element.children.last!
+
+        XCTAssertEqual(element.text, "A paragraph \(firstLink.identifier!) has at least \(secondLink.identifier!) links.")
         
         XCTAssertEqual(firstLink.title, "that")
         XCTAssertEqual(firstLink.src, "title")
@@ -332,9 +333,12 @@ final class EvergreenProcessorTests: XCTestCase {
         XCTAssertEqual(children.count, 2)
         
         let linkElement = children.first!
+
+        XCTAssertEqual(linkElement.children.count, 1)
         
-        XCTAssertEqual(linkElement.links.count, 1)
-        XCTAssertEqual(linkElement.text, "A link <a!>here<!a>")
+        let firstLink = linkElement.children.first!
+
+        XCTAssertEqual(linkElement.text, "A link \(firstLink.identifier!)")
     }
     
     func testBlockquoteProcessed() {
