@@ -3,7 +3,7 @@ import XCTest
 
 final class EvergreenConverterTests: XCTestCase {
     func testImageConverted() {
-        let imageElement = ImageEvergreenElement(elementType: "img", src: "a_source", alt: "alt_text", title: "title")
+        let imageElement = EvergreenElement(elementType: "img", src: "a_source", alt: "alt_text", title: "title")
         let converter = EvergreenConverter(elements: [imageElement])
         let result = converter.convert()
         
@@ -19,13 +19,13 @@ final class EvergreenConverterTests: XCTestCase {
     }
     
     func testParagraphConverted() {
-        let paragraphElement = TextEvergreenElement(elementType: "p", text: "A test")
+        let paragraphElement = EvergreenElement(elementType: "p", text: "A test")
         let converter = EvergreenConverter(elements: [paragraphElement])
         var result = converter.convert()
         
         XCTAssertEqual(result, "<p>A test</p>")
         
-        let paragraphWithIdentifiers = TextEvergreenElement(elementType: "p", text: "An id test")
+        let paragraphWithIdentifiers = EvergreenElement(elementType: "p", text: "An id test")
         paragraphWithIdentifiers.id = "test"
         converter.updateElements(elements: [paragraphWithIdentifiers])
         result = converter.convert()
@@ -48,7 +48,7 @@ final class EvergreenConverterTests: XCTestCase {
     func testHeaderConverted() {
         let converter = EvergreenConverter(elements: [])
         for i in 1...6 {
-            let headerElement = TextEvergreenElement(elementType: "h\(i)", text: "Header")
+            let headerElement = EvergreenElement(elementType: "h\(i)", text: "Header")
             converter.elements = [headerElement]
             let result = converter.convert()
             
@@ -57,8 +57,8 @@ final class EvergreenConverterTests: XCTestCase {
     }
     
     func testChildElementsConverted() {
-        let divElement = DivEvergreenElement(elementType: "div", identifier: "DIV")
-        let paragraphElement = TextEvergreenElement(elementType: "p", text: "A test")
+        let divElement = EvergreenElement(elementType: "div", divIdentifier: "DIV")
+        let paragraphElement = EvergreenElement(elementType: "p", text: "A test")
         divElement.children = [paragraphElement]
         let converter = EvergreenConverter(elements: [divElement])
         let result = converter.convert()
@@ -75,9 +75,9 @@ final class EvergreenConverterTests: XCTestCase {
     }
     
     func testLinkElementConverted() {
-        let paragraphElement = TextEvergreenElement(elementType: "p", text: "A paragraph <a!>that<!a> has at least <a!>two<!a> links.")
-        let firstLinkElement = LinkEvergreenElement(text: "that", href: "a-link-1", title: "title 1")
-        let secondLinkElement = LinkEvergreenElement(text: "two", href: "a-link-2")
+        let paragraphElement = EvergreenElement(elementType: "p", text: "A paragraph <a!>that<!a> has at least <a!>two<!a> links.")
+        let firstLinkElement = EvergreenElement(elementType: "a", src: "a-link-1", alt: "that", title: "title 1")
+        let secondLinkElement = EvergreenElement(elementType: "a", src: "a-link-2", alt: "two", title: nil)
         paragraphElement.links = [firstLinkElement, secondLinkElement]
         let converter = EvergreenConverter(elements: [paragraphElement])
         
@@ -89,9 +89,9 @@ final class EvergreenConverterTests: XCTestCase {
     }
     
     func testOrderedListElementConverted() {
-        let listItemElement1 = ListItemEvergreenElement("Hello")
-        let listItemElement2 = ListItemEvergreenElement("World")
-        let orderedList = ListEvergreenElement(elementType: "ol")
+        let listItemElement1 = EvergreenElement(elementType: "li", text: "Hello")
+        let listItemElement2 = EvergreenElement(elementType: "li", text: "World")
+        let orderedList = EvergreenElement(elementType: "ol")
         orderedList.children = [listItemElement1, listItemElement2]
         
         let converter = EvergreenConverter(elements: [orderedList])
@@ -104,9 +104,9 @@ final class EvergreenConverterTests: XCTestCase {
     }
     
     func testUnorderedListElementConverted() {
-        let listItem1 = ListItemEvergreenElement("Hello")
-        let listItem2 = ListItemEvergreenElement("World")
-        let unorderedList = ListEvergreenElement(elementType: "ul")
+        let listItem1 = EvergreenElement(elementType: "li", text: "Hello")
+        let listItem2 = EvergreenElement(elementType: "li", text: "World")
+        let unorderedList = EvergreenElement(elementType: "ul")
         unorderedList.children = [listItem1, listItem2]
         
         let converter = EvergreenConverter(elements: [unorderedList])
@@ -119,10 +119,10 @@ final class EvergreenConverterTests: XCTestCase {
     }
     
     func testLinksInListItems() {
-        let linkItem = LinkEvergreenElement(text: "here", href: "a-link", title: "title-1")
-        let listItem = ListItemEvergreenElement("A link <a!>here<!a>")
+        let linkItem = EvergreenElement(elementType: "a", src: "a-link", alt: "here", title: "title-1")
+        let listItem = EvergreenElement(elementType: "li", text: "A link <a!>here<!a>")
         listItem.links = [linkItem]
-        let orderedList = ListEvergreenElement(elementType: "ol")
+        let orderedList = EvergreenElement(elementType: "ol")
         orderedList.children = [listItem]
         
         let converter = EvergreenConverter(elements: [orderedList])
@@ -135,8 +135,8 @@ final class EvergreenConverterTests: XCTestCase {
     }
     
     func testBlockquoteElementConverted() {
-        let paragraphElement = TextEvergreenElement(elementType: "p", text: "A quote from a person")
-        let blockquoteElement = BlockquoteEvergreenElement()
+        let paragraphElement = EvergreenElement(elementType: "p", text: "A quote from a person")
+        let blockquoteElement = EvergreenElement(elementType: "blockquote")
         blockquoteElement.children = [paragraphElement]
         
         let converter = EvergreenConverter(elements: [blockquoteElement])

@@ -7,143 +7,67 @@
 
 public class EvergreenElement {
     var elementType: String
+    var parent: EvergreenElement?
     var children: [EvergreenElement] = []
+    var links: [EvergreenElement] = []
     
     var id: String?
     var classes: [String] = []
+    var identifier: String?
+    var divIdentifier: String?
     
+    var src: String?
+    var alt: String?
+    var title: String?
+    
+    var text: String = ""
+    
+    var listType: String?
+    
+    var rows: [EvergreenElement] = []
+    var numColumns: Int?
+    var alignment: TableAlignment = .left
+
     init(elementType: String) {
         self.elementType = elementType
     }
-}
-
-public class DivEvergreenElement: EvergreenElement {
-    var identifier: String
-    var parentDiv: DivEvergreenElement?
-    
-    init(elementType: String, identifier: String) {
-        self.identifier = identifier
-        
-        super.init(elementType: elementType)
-    }
-}
-
-public class TextEvergreenElement: EvergreenElement {
-    var text: String
-    
-    // Anchor elements
-    var links: [LinkEvergreenElement] = []
     
     init(elementType: String, text: String) {
+        self.elementType = elementType
         self.text = text
-        
-        super.init(elementType: elementType)
     }
-}
-
-public class ImageEvergreenElement: EvergreenElement {
-    var src: String
-    var alt: String
-    var title: String?
     
-    init(elementType: String, src: String, alt: String, title: String?) {
+    init(elementType: String, src: String, alt: String?, title: String?) {
+        self.elementType = elementType
         self.src = src
         self.alt = alt
         self.title = title
-        
-        super.init(elementType: elementType)
     }
-}
-
-public class ListEvergreenElement: EvergreenElement {
-    var parentList: ListEvergreenElement?
     
-    init(elementType: String, parentList: ListEvergreenElement? = nil) {
-        if let parentList = parentList {
-            self.parentList = parentList
-        }
-        
-        super.init(elementType: elementType)
+    init(elementType: String, parent: EvergreenElement?) {
+        self.elementType = elementType
+        self.parent = parent
     }
-}
-
-public class ListItemEvergreenElement: TextEvergreenElement {
-    init(_ text: String) {
-        super.init(elementType: "li", text: text)
-    }
-}
-
-public class BlockquoteEvergreenElement: EvergreenElement {
-    var parentQuote: BlockquoteEvergreenElement?
     
-    init(parentQuote: BlockquoteEvergreenElement? = nil) {
-        if let parentQuote = parentQuote {
-            self.parentQuote = parentQuote
-        }
-        
-        super.init(elementType: "blockquote")
+    init(elementType: String, divIdentifier: String) {
+        self.elementType = elementType
+        self.divIdentifier = divIdentifier
     }
-}
-
-public class LinkEvergreenElement: EvergreenElement {
-    var text: String
-    var href: String
-    var title: String?
     
-    init(text: String, href: String, title: String? = nil) {
-        self.text = text
-        self.href = href
+    func setImageInformation(src: String, alt: String?, title: String?) {
+        self.src = src
+        self.alt = alt
         self.title = title
-        super.init(elementType: "a")
-    }
-}
-
-public class TableEvergreenElement: EvergreenElement {
-    var rows: [TableRowEvergreenElement] = []
-    var numColumns: Int = 0
-    
-    override var children: [EvergreenElement] {
-        get {
-            return rows
-        }
-        
-        set {
-            super.children = newValue
-            rows = newValue.map { $0 as! TableRowEvergreenElement }
-        }
     }
     
-    init() {
-        super.init(elementType: "table")
-    }
-}
-
-public class TableRowEvergreenElement: EvergreenElement {
-    var columns: [TableItemEvergreenElement] = []
-    override var children: [EvergreenElement] {
-        get {
-            return columns
-        }
-        
-        set {
-            super.children = newValue
-        }
-    }
-    init() {
-        super.init(elementType: "tr")
+    func setTableInformation(rows: [EvergreenElement], numColumns: Int) {
+        self.rows = rows
+        self.numColumns = numColumns
     }
 }
 
 public enum TableAlignment: String {
     case left, center, right
-}
-
-public class TableItemEvergreenElement: TextEvergreenElement {
-    var alignment: TableAlignment = .left
-
-    init(text: String) {
-        super.init(elementType: "td", text: text)
-    }
 }
 
 public typealias Elements = [EvergreenElement]
