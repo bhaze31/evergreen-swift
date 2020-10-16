@@ -147,56 +147,59 @@ public class EvergreenProcessor {
         element.text = lineCopy
     }
     
-    func splitItalicMatch(line: String, in range: NSRange? = nil) -> String {
-        let matchRange = range ?? line.fullRange()
-
-        let italic = italicMatch.firstMatch(in: line, options: [], range: matchRange)
+    func splitItalicMatch(element: EvergreenElement, in range: NSRange? = nil) -> EvergreenElement {
+        let matchRange = range ?? element.text.fullRange()
         
-        guard italic != nil else { return line }
+        let text = element.text.stringFromMatch(italicMatch, in: matchRange).replaceSubstrings(["*"]).trim()
+        let italicElement = EvergreenElement(elementType: "i", text: text)
+        let identifier = UUID().uuidString
         
-        let identifier = line.stringFromMatch(italicMatch, in: matchRange).replaceSubstrings(["*"]).trim()
+        italicElement.identifier = identifier
+        
+        element.text.replaceRange(matching: italicMatch, with: identifier, range: matchRange)
 
-        return line.replaceFirst(matching: italicMatch, with: "<i!>\(identifier)<!i>", in: matchRange)
+        return italicElement
     }
     
-    func splitBoldMatch(line: String, in range: NSRange? = nil) -> String {
-        let matchRange = range ?? line.fullRange()
+    func splitBoldMatch(element: EvergreenElement, in range: NSRange? = nil) -> EvergreenElement {
+        let matchRange = range ?? element.text.fullRange()
         
-        let bold = boldMatch.firstMatch(in: line, options: [], range: matchRange)
+        let match = element.text.stringFromMatch(boldMatch, in: matchRange)
+        let text = match.replaceSubstrings(["**"]).trim()
+        let boldElement = EvergreenElement(elementType: "b", text: text)
+        let identifier = UUID().uuidString
         
-        guard bold != nil else { return line }
+        boldElement.identifier = identifier
         
-        let identifier = line.stringFromMatch(boldMatch, in: matchRange).replaceSubstrings(["**"]).trim()
-        
-        return line.replaceFirst(matching: boldMatch, with: "<b!>\(identifier)<!b>", in: matchRange)
+        element.text.replaceRange(matching: boldMatch, with: identifier, range: matchRange)
+        return boldElement
     }
     
-    func splitDoubleMatch(line: String) -> String {
-        let match = boldItalicMatch.firstMatch(in: line, options: [], range: line.fullRange())
-        var subbedRange = match?.range
+    func splitDoubleMatch(element: EvergreenElement) -> EvergreenElement {
+        let text = element.text.stringFromMatch(boldItalicMatch, in: element.text.fullRange()).replaceSubstrings(["***"]).trim()
+        let identifier = UUID().uuidString
+
+        let italicElement = EvergreenElement(elementType: "i", text: text)
+        let boldElement = EvergreenElement(elementType: "b", text: "")
+        boldElement.children = [italicElement]
+        boldElement.identifier = identifier
         
-        if subbedRange != nil {
-            subbedRange!.length += 6
-        }
-        
-        return splitBoldMatch(line: splitItalicMatch(line: line, in: match?.range), in: subbedRange)
+        element.text.replaceRange(matching: boldItalicMatch, with: identifier)
+
+        return boldElement
     }
     
     func parseModifiers(element: EvergreenElement) {
-        var lineCopy = element.text
-        
-        if lineCopy.isMatching(italicMatch) {
-            while lineCopy.isMatching(italicMatch) {
-                if lineCopy.isMatching(boldItalicMatch) {
-                    lineCopy = splitDoubleMatch(line: lineCopy)
-                } else if lineCopy.isMatching(boldMatch) {
-                    lineCopy = splitBoldMatch(line: lineCopy)
-                } else if lineCopy.isMatching(italicMatch) {
-                    lineCopy = splitItalicMatch(line: lineCopy)
+        if element.text.isMatching(italicMatch) {
+            while element.text.isMatching(italicMatch) {
+                if element.text.isMatching(boldItalicMatch) {
+                    element.children.append(splitDoubleMatch(element: element))
+                } else if element.text.isMatching(boldMatch) {
+                    element.children.append(splitBoldMatch(element: element))
+                } else if element.text.isMatching(italicMatch) {
+                    element.children.append(splitItalicMatch(element: element))
                 }
             }
-            
-            element.text = lineCopy
         }
     }
     

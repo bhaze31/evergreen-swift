@@ -69,7 +69,10 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let element = elements.first!
         
-        XCTAssertEqual(element.text, "A <b!>bolded<!b> statement")
+        XCTAssertEqual(element.children.count, 1)
+        
+        let child = element.children.first!
+        XCTAssertEqual(element.text, "A \(child.identifier!) statement")
         XCTAssertEqual(element.elementType, "h2")
     }
     
@@ -140,7 +143,11 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let element = elements.first!
         
-        XCTAssertEqual(element.text, "A <b!>bold<!b> statement")
+        XCTAssertEqual(element.children.count, 1)
+        
+        let child = element.children.first!
+        
+        XCTAssertEqual(element.text, "A \(child.identifier!) statement")
     }
     
     func testItalicProcessed() {
@@ -151,7 +158,11 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let element = elements.first!
         
-        XCTAssertEqual(element.text, "A <i!>slanted<!i> statement")
+        XCTAssertEqual(element.children.count, 1)
+        
+        let child = element.children.first!
+        
+        XCTAssertEqual(element.text, "A \(child.identifier!) statement")
     }
     
     func testBoldItalicProcessed() {
@@ -162,7 +173,16 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let element = elements.first!
         
-        XCTAssertEqual(element.text, "A <b!><i!>boldly italic<!i><!b> statement")
+        XCTAssertEqual(element.children.count, 1)
+        
+        let bold = element.children.first!
+        
+        XCTAssertEqual(bold.elementType, "b")
+        XCTAssertEqual(bold.children.count, 1)
+        XCTAssertEqual(element.text, "A \(bold.identifier!) statement")
+
+        let italic = bold.children.first!
+        XCTAssertEqual(italic.text, "boldly italic")
     }
     
     func testBoldItalicMixProcessed() {
@@ -173,7 +193,17 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let element = elements.first!
         
-        XCTAssertEqual(element.text, "A <b!>bold<!b> statement <i!>slanted<!i> <b!><i!>words<!i><!b>")
+        XCTAssertEqual(element.children.count, 3)
+        let boldItalic = element.children[0]
+        let bold = element.children[1]
+        let italic = element.children[2]
+        
+        XCTAssertEqual(boldItalic.elementType, "b")
+        XCTAssertEqual(boldItalic.children.count, 1)
+        XCTAssertEqual(bold.elementType, "b")
+        XCTAssertEqual(italic.elementType, "i")
+        
+        XCTAssertEqual(element.text, "A \(bold.identifier!) statement \(italic.identifier!) \(boldItalic.identifier!)")
     }
     
     func testImageProcessed() {
