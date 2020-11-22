@@ -131,4 +131,16 @@ extension String {
     func fullRange() -> NSRange {
         return NSRange(location: 0, length: self.count)
     }
+    
+    /// Insert a substring into a string, based on a regular expression match
+    mutating func replaceRange(matching: NSRegularExpression, with: String, options: NSRegularExpression.MatchingOptions = [], range _range: NSRange? = nil) {
+        let range = _range ?? self.fullRange()
+        let _match = matching.firstMatch(in: self, options: options, range: range)
+        
+        guard let match = _match?.range else { return }
+        let startIndex = self.index(self.startIndex, offsetBy: match.location)
+        let endIndex = self.index(startIndex, offsetBy: match.length)
+        
+        self.replaceSubrange(startIndex..<endIndex, with: with)
+    }
 }
