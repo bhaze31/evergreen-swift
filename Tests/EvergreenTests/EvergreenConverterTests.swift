@@ -164,6 +164,23 @@ final class EvergreenConverterTests: XCTestCase {
         let result = converter.convert()
         XCTAssertEqual(result, "<table class=\"parentClass\" id=\"parent\"><tr class=\"class\" id=\"id\"><th style=\"text-align:left;\">a</td><th style=\"text-align:center;\">kitchen</td><th style=\"text-align:right;\">table</td></tr><tr class=\"dataClass\" id=\"dataID\"><td style=\"text-align:left;\">in</td><td style=\"text-align:center;\">the</td><td style=\"text-align:right;\">bedroom</td></tr></table>")
     }
+    
+    func testCodeConverted() {
+        let lines: Array<String> = [
+            "```",
+            "function hello() {",
+            "  return \"Hello World!\"",
+            "}",
+            "```"
+        ];
+        
+        let processor = EvergreenProcessor(lines: lines)
+        let elements = processor.parse()
+        
+        let converter = EvergreenConverter(elements: elements)
+        let result = converter.convert()
+        XCTAssertEqual(result, "<pre><code>function hello() {\n  return \"Hello World!\"\n}</code></pre>")
+    }
 
     static var allTests = [
         ("testImageConverter", testImageConverted),
@@ -175,5 +192,6 @@ final class EvergreenConverterTests: XCTestCase {
         ("testLinkElementConverter", testLinkElementConverted),
         ("testOrderedListElementConverter", testOrderedListElementConverted),
         ("testBlockquoteElementConverter", testBlockquoteElementConverted),
+        ("testCodeConverter", testCodeConverted)
     ]
 }

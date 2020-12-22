@@ -35,6 +35,10 @@ public class EvergreenProcessor {
     var inTable = false
     var currentTable: EvergreenElement?
     
+    // MARK: Code Variables
+    var inCode = false
+    var currentCode: EvergreenElement?
+
     // MARK: Regular Expressions
     let listMatch = try! NSRegularExpression(pattern: "^([0-9]+\\.|(-|\\+|\\*))", options: [])
     let orderedMatch = try! NSRegularExpression(pattern: "^[0-9]+\\.", options: [])
@@ -72,6 +76,8 @@ public class EvergreenProcessor {
     let italicMatch = try! NSRegularExpression(pattern: "\\*{1}[^\\*]+\\*{1}", options: [])
     let boldMatch = try! NSRegularExpression(pattern: "\\*{2}[^\\*]+\\*{2}", options: [])
     let boldItalicMatch = try! NSRegularExpression(pattern: "\\*{3}[^\\*]+\\*{3}", options: [])
+    
+    let codeMatch = try! NSRegularExpression(pattern: "^```", options: [])
 
     // MARK: Content
     var lines: [String] = [] {
@@ -541,6 +547,15 @@ public class EvergreenProcessor {
         }
     }
     
+    // MARK: <code> Element
+    func addToCodeElement(_ line: String) {
+        if let empty = currentCode?.text.isEmpty, empty {
+            currentCode?.text = line
+        } else {
+            currentCode?.text += "\n\(line)"
+        }
+    }
+    
     // MARK: <div> Element
     func parseDivElement(_ line: String) {
         var identifier = line.replacingOccurrences(of: "<<-", with: "").trim()
@@ -601,9 +616,25 @@ public class EvergreenProcessor {
             parseBlockquoteElement(line)
         } else if line.isMatching(tableMatch) {
             parseTableElement(line)
+        } else if trimmed.isMatching(codeMatch) {
+            if inCode {
+                inCode = false
+                currentCode = nil
+            } else {
+                inCode = true
+                currentCode = EvergreenElement(elementType: "code")
+                
+                let pre = EvergreenElement(elementType: "pre")
+                pre.children = [currentCode!]
+                addToElements(pre)
+            }
         } else if trimmed.count > 0 {
-            resetAllSpecialElements()
-            addToElements(parseTextElement(trimmed))
+            if inCode {
+                addToCodeElement(line)
+            } else {
+                resetAllSpecialElements()
+                addToElements(parseTextElement(trimmed))
+            }
         } else {
             resetAllSpecialElements()
         }
@@ -645,5 +676,7 @@ public class EvergreenProcessor {
         self.shouldAppendParagraph = false
         
         self.inTable = false
+        
+        self.inCode = false
     }
 }

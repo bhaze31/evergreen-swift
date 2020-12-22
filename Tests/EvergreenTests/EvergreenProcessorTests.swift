@@ -552,6 +552,26 @@ final class EvergreenProcessorTests: XCTestCase {
             XCTAssertEqual(column.alignment, alignment)
         }
     }
+    
+    func testCodeProcessed() {
+        let lines: Array<String> = [
+            "```",
+            "function hello() {",
+            "  return \"Hello World!\"",
+            "}",
+            "```"
+        ];
+        
+        let processor = EvergreenProcessor(lines: lines)
+        let elements = processor.parse()
+        
+        let pre = elements.first!
+        XCTAssertEqual(pre.elementType, "pre")
+        
+        let code = pre.children.first!
+        XCTAssertEqual(code.elementType, "code")
+        XCTAssertEqual(code.text, "function hello() {\n  return \"Hello World!\"\n}")
+    }
 
     static var allTests = [
         ("testHeaderProcessor", testHeaderProcessed),
@@ -568,6 +588,7 @@ final class EvergreenProcessorTests: XCTestCase {
         ("testDivProcessor", testDivProcessed),
         ("testDivWithIDProcessor", testDivWithIDProcessed),
         ("testSubDivProcessor", testSubDivProcessed),
-        ("testTableProcessor", testTableProcessed)
+        ("testTableProcessor", testTableProcessed),
+        ("testCodeProcessor", testCodeProcessed)
     ]
 }
