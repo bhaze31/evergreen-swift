@@ -52,11 +52,11 @@ public class EvergreenProcessor {
     let altMatch = try! NSRegularExpression(pattern: "!?\\[.+\\]", options: [])
     let descMatch = try! NSRegularExpression(pattern: "\\(.+\\)", options: [])
     
-    let linkMatch = try! NSRegularExpression(pattern: "\\[[\\w\\s\"']+\\]\\([\\w\\s\\/:\\.\"']+\\)", options: [])
+    let linkMatch = try! NSRegularExpression(pattern: "\\[[^\\]]+\\]\\([^\\)]+\\)", options: [])
     
-    let imageMatch = try! NSRegularExpression(pattern: "!\\[.+\\]\\(.+\\)", options: [])
+    let imageMatch = try! NSRegularExpression(pattern: "!\\[[^\\]]+]\\([^\\)]+\\)", options: [])
     
-    let linkImageMatch = try! NSRegularExpression(pattern: "^\\[!\\[[\\w\\s\"']+\\]\\([\\w\\s\\/:\\.\"']+\\)\\]\\([\\w\\s\\/:\\.\"']+\\)$", options: [])
+    let linkImageMatch = try! NSRegularExpression(pattern: "\\[!\\[[^\\]]+\\]\\([^\\)]+\\)\\]\\([^\\)]+\\)", options: [])
 
     let tableMatch = try! NSRegularExpression(pattern: "^\\|[\\w\\s-_\\:\\|]+\\|", options: [])
     let tableHeaderMatch = try! NSRegularExpression(pattern: "^\\|(\\:?-{3,}\\:?\\|)+$", options: [])

@@ -18,7 +18,6 @@ public class EvergreenConverter {
     }
     
     func updateBoldElement(text: String) -> String {
-        
         return text
     }
     
