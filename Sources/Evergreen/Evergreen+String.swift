@@ -36,7 +36,16 @@ extension String {
     /// - Returns: The new string with the first match, if applicable, replaced
 
     func replaceFirst(matching: NSRegularExpression, with template: String, in range: NSRange? = nil, options: NSRegularExpression.MatchingOptions = []) -> String {
-        let matchedRange = range ?? fullRange()
+        var matchedRange: NSRange!
+        
+        if let r = range {
+            matchedRange = r
+        } else {
+            guard let match = matching.firstMatch(in: self, options: [], range: fullRange()) else {
+                return self
+            }
+            matchedRange = match.range
+        }
 
         return matching.stringByReplacingMatches(in: self, options: options, range: matchedRange, withTemplate: template)
     }
