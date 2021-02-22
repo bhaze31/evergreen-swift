@@ -558,9 +558,10 @@ final class EvergreenProcessorTests: XCTestCase {
             "```",
             "function hello() {",
             "  return \"Hello World!\"",
+            "",
             "}",
             "```"
-        ];
+        ]
         
         let processor = EvergreenProcessor(lines: lines)
         let elements = processor.parse()
@@ -571,6 +572,41 @@ final class EvergreenProcessorTests: XCTestCase {
         let code = pre.children.first!
         XCTAssertEqual(code.elementType, "code")
         XCTAssertEqual(code.text, "function hello() {\n  return \"Hello World!\"\n}")
+    }
+
+    func testHTMLProcessed() {
+        let lines: Array<String> = [
+            "```",
+            "<!DOCTYPE html>",
+            "<html>",
+            "  <head>",
+            "    <link rel='stylesheet' type='text/css' />",
+            "  </head>",
+            "  <body>",
+            "    <h1>Hello World</h1>",
+            "  </body>",
+            "</html>"
+        ]
+        
+        let processor = EvergreenProcessor(lines: lines)
+        let elements = processor.parse()
+        
+        let pre = elements.first!
+        XCTAssertEqual(pre.elementType, "pre")
+        
+        let code = pre.children.first!
+        XCTAssertEqual(code.elementType, "code")
+        XCTAssertEqual(code.text, """
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;link rel='stylesheet' type='text/css' /&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Hello World&lt;/h1&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+""")
     }
 
     static var allTests = [

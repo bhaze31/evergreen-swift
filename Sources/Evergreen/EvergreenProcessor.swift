@@ -78,6 +78,7 @@ public class EvergreenProcessor {
     let boldItalicMatch = try! NSRegularExpression(pattern: "\\*{3}[^\\*]+\\*{3}", options: [])
     
     let codeMatch = try! NSRegularExpression(pattern: "^```", options: [])
+    let htmlMatch = try! NSRegularExpression(pattern: "<[\\/]?[^>]+>", options: [])
 
     // MARK: Content
     var lines: [String] = [] {
@@ -549,10 +550,19 @@ public class EvergreenProcessor {
     
     // MARK: <code> Element
     func addToCodeElement(_ line: String) {
+        var escaped = line
+        if line.isMatching(htmlMatch) {
+            let open = try! NSRegularExpression(pattern: "<", options: [])
+            let close = try! NSRegularExpression(pattern: ">", options: [])
+            while let match = htmlMatch.firstMatch(in: escaped, options: [], range: escaped.fullRange()) {
+                escaped = escaped.replaceFirst(matching: close, with: "&gt;", in: match.range, options: [])
+                escaped = escaped.replaceFirst(matching: open, with: "&lt;", in: match.range, options: [])
+            }
+        }
         if let empty = currentCode?.text.isEmpty, empty {
-            currentCode?.text = line
+            currentCode?.text = escaped
         } else {
-            currentCode?.text += "\n\(line)"
+            currentCode?.text += "\n\(escaped)"
         }
     }
     
@@ -636,7 +646,9 @@ public class EvergreenProcessor {
                 addToElements(parseTextElement(trimmed))
             }
         } else {
-            resetAllSpecialElements()
+            if !inCode {
+                resetAllSpecialElements()
+            }
         }
         
         if line.isMatching(breakMatch, in: range) {
