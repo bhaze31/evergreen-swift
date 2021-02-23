@@ -646,7 +646,9 @@ public class EvergreenProcessor {
                 addToElements(parseTextElement(trimmed))
             }
         } else {
-            if !inCode {
+            if inCode {
+                addToCodeElement("")
+            } else {
                 resetAllSpecialElements()
             }
         }

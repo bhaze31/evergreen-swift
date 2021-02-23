@@ -571,7 +571,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let code = pre.children.first!
         XCTAssertEqual(code.elementType, "code")
-        XCTAssertEqual(code.text, "function hello() {\n  return \"Hello World!\"\n}")
+        XCTAssertEqual(code.text, "function hello() {\n  return \"Hello World!\"\n\n}")
     }
 
     func testHTMLProcessed() {
@@ -583,6 +583,7 @@ final class EvergreenProcessorTests: XCTestCase {
             "    <link rel='stylesheet' type='text/css' />",
             "  </head>",
             "  <body>",
+            "",
             "    <h1>Hello World</h1>",
             "  </body>",
             "</html>"
@@ -603,11 +604,14 @@ final class EvergreenProcessorTests: XCTestCase {
     &lt;link rel='stylesheet' type='text/css' /&gt;
   &lt;/head&gt;
   &lt;body&gt;
+
     &lt;h1&gt;Hello World&lt;/h1&gt;
   &lt;/body&gt;
 &lt;/html&gt;
 """)
     }
+    
+    
 
     static var allTests = [
         ("testHeaderProcessor", testHeaderProcessed),
