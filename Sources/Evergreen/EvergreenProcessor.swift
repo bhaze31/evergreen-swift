@@ -143,7 +143,7 @@ public class EvergreenProcessor {
             let (anchorText, href, altText) = linkParser(line: lineCopy, in: match.range)
             
             let identifier = UUID()
-            let link = EvergreenElement(elementType: "a", src: href, alt: altText, title: anchorText)
+            let link = EvergreenElement(elementType: "a", src: href, linkText: anchorText, linkAlt: altText)
             link.identifier = identifier.uuidString
         
             element.children.append(link)

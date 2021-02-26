@@ -3,7 +3,7 @@ import XCTest
 
 final class EvergreenConverterTests: XCTestCase {
     func testImageConverted() {
-        let imageElement = EvergreenElement(elementType: "img", src: "a_source", alt: "alt_text", title: "title")
+        let imageElement = EvergreenElement(elementType: "img", src: "a_source", linkText: "alt_text", linkAlt: "title")
         let converter = EvergreenConverter(elements: [imageElement])
         let result = converter.convert()
         
@@ -76,9 +76,9 @@ final class EvergreenConverterTests: XCTestCase {
     
     func testLinkElementConverted() {
         let paragraphElement = EvergreenElement(elementType: "p", text: "A paragraph abcdef has at least zyxwvut links.")
-        let firstLinkElement = EvergreenElement(elementType: "a", src: "a-link-1", alt: "that", title: "title 1")
+        let firstLinkElement = EvergreenElement(elementType: "a", src: "a-link-1", linkText: "that", linkAlt: "title 1")
         firstLinkElement.identifier = "abcdef"
-        let secondLinkElement = EvergreenElement(elementType: "a", src: "a-link-2", alt: "two", title: nil)
+        let secondLinkElement = EvergreenElement(elementType: "a", src: "a-link-2", linkText: "two", linkAlt: nil)
         secondLinkElement.identifier = "zyxwvut"
         paragraphElement.children = [firstLinkElement, secondLinkElement]
         let converter = EvergreenConverter(elements: [paragraphElement])
@@ -121,7 +121,7 @@ final class EvergreenConverterTests: XCTestCase {
     }
     
     func testLinksInListItems() {
-        let linkItem = EvergreenElement(elementType: "a", src: "a-link", alt: "here", title: "title-1")
+        let linkItem = EvergreenElement(elementType: "a", src: "a-link", linkText: "here", linkAlt: "title-1")
         linkItem.identifier = "abcdefg"
         let listItem = EvergreenElement(elementType: "li", text: "A link abcdefg")
         listItem.children = [linkItem]

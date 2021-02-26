@@ -45,10 +45,10 @@ public class EvergreenConverter {
     
     func createAnchorElement(element: EvergreenElement) -> String {
         let href = element.src ?? ""
-        let text = element.alt ?? ""
+        let text = element.linkText ?? ""
         var anchorStringElement = "<a href=\"\(href)\" "
         
-        if let title = element.title {
+        if let title = element.linkAlt {
             anchorStringElement += "title=\"\(title)\" "
         }
         
@@ -57,10 +57,10 @@ public class EvergreenConverter {
     
     func createImageElement(element: EvergreenElement) -> String {
         let src = element.src ?? ""
-        let alt = element.alt ?? ""
+        let alt = element.linkText ?? ""
         var imageStringElement = "<img src=\"\(src)\" alt=\"\(alt)\""
         
-        if let title = element.title {
+        if let title = element.linkAlt {
             imageStringElement += " title=\"\(title)\""
         }
         
@@ -119,11 +119,11 @@ public class EvergreenConverter {
     func createAnchorReplacement(element: EvergreenElement) -> String {
         let src = element.src ?? ""
         var anchor = "<a href=\"\(src)\""
-        if let title = element.title {
+        if let title = element.linkAlt {
             anchor += " title=\"\(title)\""
         }
         
-        let text = element.alt ?? ""
+        let text = element.linkText ?? ""
         return anchor + ">\(text)</a>"
     }
     

@@ -16,8 +16,8 @@ public class EvergreenElement {
     var divIdentifier: String?
     
     var src: String?
-    var alt: String?
-    var title: String?
+    var linkText: String?
+    var linkAlt: String?
     
     var text: String = ""
     
@@ -36,11 +36,11 @@ public class EvergreenElement {
         self.text = text
     }
     
-    init(elementType: String, src: String, alt: String?, title: String?) {
+    init(elementType: String, src: String, linkText: String?, linkAlt: String?) {
         self.elementType = elementType
         self.src = src
-        self.alt = alt
-        self.title = title
+        self.linkText = linkText
+        self.linkAlt = linkAlt
     }
     
     init(elementType: String, parent: EvergreenElement?) {
@@ -55,8 +55,8 @@ public class EvergreenElement {
     
     func setImageInformation(src: String, alt: String?, title: String?) {
         self.src = src
-        self.alt = alt
-        self.title = title
+        self.linkText = alt
+        self.linkAlt = title
     }
     
     func setTableInformation(rows: [EvergreenElement], numColumns: Int) {

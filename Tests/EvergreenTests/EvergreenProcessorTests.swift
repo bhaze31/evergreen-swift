@@ -126,13 +126,13 @@ final class EvergreenProcessorTests: XCTestCase {
 
         XCTAssertEqual(element.text, "A paragraph \(firstLink.identifier!) has at least \(secondLink.identifier!) links.")
         
-        XCTAssertEqual(firstLink.title, "that")
+        XCTAssertEqual(firstLink.linkAlt, "two links")
         XCTAssertEqual(firstLink.src, "title")
-        XCTAssertEqual(firstLink.alt, "two links")
+        XCTAssertEqual(firstLink.linkText, "that")
         
-        XCTAssertEqual(secondLink.title, "two")
+        XCTAssertEqual(secondLink.linkAlt, nil)
         XCTAssertEqual(secondLink.src, "reffin")
-        XCTAssertEqual(secondLink.alt, nil)
+        XCTAssertEqual(secondLink.linkText, "two")
     }
     
     func testBoldProcessed() {
@@ -213,15 +213,15 @@ final class EvergreenProcessorTests: XCTestCase {
         let elements = processor.parse()
         let imageElement = elements.first!
         
-        XCTAssertEqual(imageElement.alt, "Alt Image")
+        XCTAssertEqual(imageElement.linkText, "Alt Image")
         XCTAssertEqual(imageElement.src, "source")
-        XCTAssertEqual(imageElement.title, "and a title")
+        XCTAssertEqual(imageElement.linkAlt, "and a title")
 
         let titleLessImageElement = elements.last!
         
-        XCTAssertEqual(titleLessImageElement.alt, "Alt Image")
+        XCTAssertEqual(titleLessImageElement.linkText, "Alt Image")
         XCTAssertEqual(titleLessImageElement.src, "source")
-        XCTAssertEqual(titleLessImageElement.title, nil)
+        XCTAssertEqual(titleLessImageElement.linkAlt, nil)
     }
     
     func testBreakProcessed() {
