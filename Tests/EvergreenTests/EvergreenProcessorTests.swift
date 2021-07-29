@@ -548,7 +548,52 @@ final class EvergreenProcessorTests: XCTestCase {
         }
         
         alignments.enumerated().forEach { index, alignment in
+            let column = dataRow.children[index]
+            XCTAssertEqual(column.alignment, alignment)
+        }
+    }
+    
+    func testTableHeaderWithColumnDifference() {
+        let tableHeader = "|a|kitchen|table|{#id .class} {{#parent .pClass}}"
+        let tableDashes = "|:---|:---:|---:|---|---|"
+        let row1Data = "|in|the|bedroom|closet|{#tr .data}"
+        let row2Data = "|or|the|bathroom|{#tr2}"
+        
+        let processor = EvergreenProcessor(lines: [tableHeader, tableDashes, row1Data, row2Data])
+        
+        let elements = processor.parse()
+        let table = elements.first!
+        XCTAssertEqual(table.children.count, 3)
+        XCTAssertEqual(table.numColumns, 3)
+        XCTAssertEqual(table.id, "parent")
+        checkClasses(expected: ["pClass"], classes: table.classes)
+        
+        let headerRow = table.children.first!
+        XCTAssertEqual(headerRow.id, "id")
+        checkClasses(expected: ["class"], classes: headerRow.classes)
+        headerRow.children.forEach { column in
+            XCTAssertEqual(column.elementType, "th")
+        }
+        
+        let data1Row = table.children[1]
+        XCTAssertEqual(data1Row.id, "tr")
+        checkClasses(expected: ["data"], classes: data1Row.classes)
+        data1Row.children.forEach { column in
+            XCTAssertEqual(column.elementType, "td")
+        }
+        
+        let data2Row = table.children.last!
+        XCTAssertEqual(data2Row.id, "tr2")
+        XCTAssertEqual(data2Row.children.count, 3)
+        let alignments: [TableAlignment] = [.left, .center, .right]
+        
+        alignments.enumerated().forEach { index, alignment in
             let column = headerRow.children[index]
+            XCTAssertEqual(column.alignment, alignment)
+        }
+        
+        alignments.enumerated().forEach { index, alignment in
+            let column = data1Row.children[index]
             XCTAssertEqual(column.alignment, alignment)
         }
     }
@@ -629,6 +674,7 @@ final class EvergreenProcessorTests: XCTestCase {
         ("testDivWithIDProcessor", testDivWithIDProcessed),
         ("testSubDivProcessor", testSubDivProcessed),
         ("testTableProcessor", testTableProcessed),
+        ("testTableHeaderWithColumnDifference", testTableHeaderWithColumnDifference),
         ("testCodeProcessor", testCodeProcessed)
     ]
 }

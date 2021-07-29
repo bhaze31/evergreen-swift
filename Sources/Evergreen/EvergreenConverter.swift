@@ -116,16 +116,16 @@ public class EvergreenConverter {
         return table + "</table>"
     }
     
-    func createAnchorReplacement(element: EvergreenElement) -> String {
-        let src = element.src ?? ""
-        var anchor = "<a href=\"\(src)\""
-        if let title = element.linkAlt {
-            anchor += " title=\"\(title)\""
-        }
-        
-        let text = element.linkText ?? ""
-        return anchor + ">\(text)</a>"
-    }
+//    func createAnchorReplacement(element: EvergreenElement) -> String {
+//        let src = element.src ?? ""
+//        var anchor = "<a href=\"\(src)\""
+//        if let title = element.linkAlt {
+//            anchor += " title=\"\(title)\""
+//        }
+//        
+//        let text = element.linkText ?? ""
+//        return anchor + ">\(text)</a>"
+//    }
     
     func createElement(element: EvergreenElement) -> String {
         if element.elementType == "i" {

@@ -97,7 +97,7 @@ public class EvergreenProcessor {
         self.lines = lines.components(separatedBy: .newlines)
     }
 
-    func splitIdentifiersFromLine(line: String, matching classType: NSRegularExpression? = nil) -> (String, String?, [String]) {
+    func splitIdentifiersFromLine(_ line: String, matching classType: NSRegularExpression? = nil) -> (String, String?, [String]) {
         let match = classType ?? identifierMatch
         var id: String?
         var classList = [String]()
@@ -222,7 +222,7 @@ public class EvergreenProcessor {
         let header = EvergreenElement(elementType: "h\(match.range.length)", text: originalText)
 
         if originalText.isMatching(identifierMatch) {
-            let (trimmed, id, classes) = splitIdentifiersFromLine(line: originalText)
+            let (trimmed, id, classes) = splitIdentifiersFromLine(originalText)
             header.id = id
             header.classes = classes
             header.text = trimmed
@@ -238,7 +238,7 @@ public class EvergreenProcessor {
         let textElement = EvergreenElement(elementType: "p", text: line)
         
         if line.isMatching(identifierMatch) {
-            let (trimmed, id, classes) = splitIdentifiersFromLine(line: line)
+            let (trimmed, id, classes) = splitIdentifiersFromLine(line)
             textElement.id = id
             textElement.classes = classes
             textElement.text = trimmed
@@ -285,7 +285,7 @@ public class EvergreenProcessor {
         listItem.text = text
         
         if text.isMatching(identifierMatch) {
-            let (trimmedText, id, classes) = splitIdentifiersFromLine(line: text)
+            let (trimmedText, id, classes) = splitIdentifiersFromLine(text)
             listItem.text = trimmedText
             listItem.id = id
             listItem.classes = classes
@@ -317,7 +317,7 @@ public class EvergreenProcessor {
                     currentList = listType == .O_LIST ? getOrderedList(parentList) : getUnorderedList(parentList)
                     
                     if line.isMatching(parentIdentifierMatch) {
-                        let (trimmedLine, id, classes) = splitIdentifiersFromLine(line: line, matching: parentIdentifierMatch)
+                        let (trimmedLine, id, classes) = splitIdentifiersFromLine(line, matching: parentIdentifierMatch)
                         currentList?.id = id
                         currentList?.classes = classes
                         line = trimmedLine
@@ -358,7 +358,7 @@ public class EvergreenProcessor {
             }
             
             if line.isMatching(parentIdentifierMatch) {
-                let (trimmedLine, id, classes) = splitIdentifiersFromLine(line: line, matching: parentIdentifierMatch)
+                let (trimmedLine, id, classes) = splitIdentifiersFromLine(line, matching: parentIdentifierMatch)
                 currentList?.id = id
                 currentList?.classes = classes
                 line = trimmedLine
@@ -397,7 +397,7 @@ public class EvergreenProcessor {
             parentQuote?.children.append(currentQuote)
             
             if trimmed.isMatching(parentIdentifierMatch) {
-                let (removedIDText, id, classes) = splitIdentifiersFromLine(line: trimmed, matching: parentIdentifierMatch)
+                let (removedIDText, id, classes) = splitIdentifiersFromLine(trimmed, matching: parentIdentifierMatch)
                 currentQuote.children.append(parseParagraphElement(removedIDText))
                 currentQuote.id = id
                 currentQuote.classes = classes
@@ -442,7 +442,7 @@ public class EvergreenProcessor {
             let blockquote = EvergreenElement(elementType: "blockquote")
             
             if trimmed.isMatching(parentIdentifierMatch) {
-                let (removedIDText, id, classes) = splitIdentifiersFromLine(line: trimmed, matching: parentIdentifierMatch)
+                let (removedIDText, id, classes) = splitIdentifiersFromLine(trimmed, matching: parentIdentifierMatch)
                 blockquote.children.append(parseParagraphElement(removedIDText))
                 blockquote.id = id
                 blockquote.classes = classes
@@ -462,90 +462,88 @@ public class EvergreenProcessor {
         if inTable {
             // Only convert items to table header if it is the second row
             if line.isMatching(tableHeaderMatch) && currentTable?.children.count == 1 {
-                // At this point, we know we are inTable and there is more than 0 rows
-                let headerRow = currentTable!.children.first!
-                var columns = headerRow.children
-
-                line.split(separator: "|")
-                    .map { String($0) }
-                    .enumerated()
-                    .forEach { index, item in
-                        let element: EvergreenElement
-                        if index + 1 > headerRow.children.count {
-                            element = EvergreenElement(elementType: "td", text: "")
-                            columns.append(element)
-                        } else {
-                            element = headerRow.children[index]
-                        }
-                        
-                        element.elementType = "th"
-
-                        if item.isMatching(centerTableMatch) {
-                            element.alignment = .center
-                        } else if item.isMatching(leftTableMatch) {
-                            element.alignment = .left
-                        } else if item.isMatching(rightTableMatch) {
-                            element.alignment = .right
-                        }
-                    }
-
-                headerRow.children = columns
-                currentTable?.numColumns = headerRow.children.count
-
-                return
+                setHeaderElementsForTable(line)
+            } else {
+               createRowElement(line)
             }
-            
-            let rowElement = EvergreenElement(elementType: "tr")
-            var trimmedLine = line
+        } else {
+            createTableElement(line)
+        }
+    }
+    
+    func createTableElement(_ line: String) {
+        let tableElement = EvergreenElement(elementType: "table")
+        
+        currentTable = tableElement
+        inTable = true
+        addToElements(tableElement)
+        
+        var rowLine = line
+        if line.isMatching(parentIdentifierMatch) {
+            let (trimmed, tableId, tableClasses) = splitIdentifiersFromLine(line, matching: parentIdentifierMatch)
+            tableElement.id = tableId
+            tableElement.classes = tableClasses
+            rowLine = trimmed
+        }
+        
+        createRowElement(rowLine)
+    }
+    
+    /// Create a new row in the current table. This will also
+    /// align the rows as needed if there is a header alignment row
+    /// - Parameter line: The text representation of the elements in the table
+    func createRowElement(_ line: String) {
+        let rowElement = EvergreenElement(elementType: "tr")
+        var trimmedLine = line
+        
+        if trimmedLine.isMatching(identifierMatch) {
+            let (trimmed, rowId, rowClasses) = splitIdentifiersFromLine(line)
+            rowElement.id = rowId
+            rowElement.classes = rowClasses
+            trimmedLine = trimmed
+        }
 
-            if trimmedLine.isMatching(identifierMatch) {
-                let (trimmed, rowId, rowClasses) = splitIdentifiersFromLine(line: line)
-                rowElement.id = rowId
-                rowElement.classes = rowClasses
-                trimmedLine = trimmed
-            }
-            
-            trimmedLine.split(separator: "|").enumerated().forEach { index, item in
+        let headerRow = currentTable?.children.first
+        trimmedLine.split(separator: "|")
+            .enumerated()
+            .forEach { index, item in
+                if headerRow != nil && index >= headerRow!.children.count { return }
+
                 let column = EvergreenElement(elementType: "td", text: String(item))
-                let firstColumn = currentTable?.children.first?.children[index]
-                column.alignment = firstColumn?.alignment ?? .left
+                
+                let headerColumn = headerRow?.children[index]
+                column.alignment = headerColumn?.alignment ?? .left
                 rowElement.children.append(column)
             }
-            
-            if rowElement.children.count > (currentTable?.numColumns ?? 0) {
-                currentTable?.numColumns = rowElement.children.count
+        
+        currentTable?.children.append(rowElement)
+    }
+    
+    /// Set the header alignments if there is a header alignment row
+    /// This should only be called when inside a table already and when
+    /// the line passed to it is the second row. Otherwise, we could
+    /// set the header context multiple times unnecessarily.
+    /// - Parameter line: The header alignment line that is passed in
+    func setHeaderElementsForTable(_ line: String) {
+        guard let headerRow = currentTable?.children.first, let columnCount = currentTable?.numColumns else { return }
+        
+        line.split(separator: "|")
+            .map { String($0) }
+            .enumerated()
+            .forEach { index, item in
+                if index >= columnCount { return }
+                
+                let element = headerRow.children[index]
+                element.elementType = "th"
+                
+                if item.isMatching(centerTableMatch) {
+                    element.alignment = .center
+                } else if item.isMatching(leftTableMatch) {
+                    element.alignment = .left
+                } else if item.isMatching(rightTableMatch) {
+                    element.alignment = .right
+                }
             }
-
-            currentTable?.children.append(rowElement)
-        } else {
-            let tableElement = EvergreenElement(elementType: "table")
-            let rowElement = EvergreenElement(elementType: "tr")
-
-            var trimmedLine = line
-            if trimmedLine.isMatching(parentIdentifierMatch) {
-                let (trimmed, tableId, tableClasses) = splitIdentifiersFromLine(line: trimmedLine, matching: parentIdentifierMatch)
-                tableElement.id = tableId
-                tableElement.classes = tableClasses
-                trimmedLine = trimmed
-            }
-
-            if trimmedLine.isMatching(identifierMatch) {
-                let (trimmed, rowId, rowClasses) = splitIdentifiersFromLine(line: trimmedLine)
-                rowElement.id = rowId
-                rowElement.classes = rowClasses
-                trimmedLine = trimmed
-            }
-
-            trimmedLine.split(separator: "|").forEach { item in
-                rowElement.children.append(EvergreenElement(elementType: "td", text: String(item)))
-            }
-            
-            tableElement.numColumns = rowElement.children.count
-            tableElement.children.append(rowElement)
-            currentTable = tableElement
-            inTable = true
-            addToElements(tableElement)
-        }
     }
     
     // MARK: <code> Element
@@ -572,7 +570,7 @@ public class EvergreenProcessor {
         let divElement = EvergreenElement(elementType: "div", divIdentifier: identifier)
         
         if identifier.isMatching(identifierMatch) {
-            let (trimmedIdentifier, id, classes) = splitIdentifiersFromLine(line: identifier)
+            let (trimmedIdentifier, id, classes) = splitIdentifiersFromLine(identifier)
             divElement.identifier = trimmedIdentifier
             divElement.id = id
             divElement.classes = classes

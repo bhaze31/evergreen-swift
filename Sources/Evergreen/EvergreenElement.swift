@@ -22,9 +22,16 @@ public class EvergreenElement {
     var text: String = ""
     
     var listType: String?
-    
-    var rows: [EvergreenElement] = []
-    var numColumns: Int?
+
+    var numColumns: Int? {
+        get {
+            if elementType == "table" {
+                return children.first?.children.count
+            }
+            
+            return nil
+        }
+    }
     var alignment: TableAlignment = .left
 
     init(elementType: String) {
@@ -57,11 +64,6 @@ public class EvergreenElement {
         self.src = src
         self.linkText = alt
         self.linkAlt = title
-    }
-    
-    func setTableInformation(rows: [EvergreenElement], numColumns: Int) {
-        self.rows = rows
-        self.numColumns = numColumns
     }
 }
 
