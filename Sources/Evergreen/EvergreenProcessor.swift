@@ -270,6 +270,11 @@ public class EvergreenProcessor {
         return parseParagraphElement(line)
     }
     
+    /// Check the list type of the list item we are processing
+    /// Since we allow users to switch list types without line breaks,
+    /// this allows us to change to a new list element when necessary
+    /// - Parameter line: The text of the line being processed
+    /// - Returns: The type of list, based on the line
     func nextListType(_ line: String) -> ListType {
         let trimmed = line.trim()
         return trimmed.isMatching(orderedMatch) ? .O_LIST : .U_LIST
@@ -372,6 +377,41 @@ public class EvergreenProcessor {
             currentList?.children.append(parseListItem(line))
         }
     }
+    
+    func parseList(_ _line: String) {
+        let line = _line
+        let listType = nextListType(line)
+
+        if inList {
+            // Check if indentation changed, and if so set the current list
+            let indentRegex = try! NSRegularExpression(pattern: " +", options: [])
+            
+            // Check if list types are different, and if they are create a new list
+            if listType != currentListType {
+                // We need to create a new list
+                let tempList = listType == .O_LIST ? getOrderedList() : getUnorderedList()
+                currentList = tempList
+
+                // If we changed types, and the indent length was 0, append newly created list to elements
+                if currentListIndentLength == 0 {
+                    addToElements(currentList!)
+                }
+            }
+            
+            // Now that we have the current list set, we are fine
+        } else {
+            // We are not in a list, and since we can only create base lists with no indent, we know
+            // indent length is 0
+            currentList = listType == .O_LIST ? getOrderedList() : getUnorderedList()
+            currentListType = listType
+            currentListIndentLength = 0
+            addToElements(currentList!)
+        }
+        
+        // This should never be false at this point, as we are either in a list or created one
+        currentList?.children.append(parseListItem(line))
+    }
+    
     
     func getOrderedList(_ parentElement: EvergreenElement? = nil) -> EvergreenElement {
         return EvergreenElement(elementType: "ol", parent: parentElement)
@@ -618,7 +658,9 @@ public class EvergreenProcessor {
             addToElements(EvergreenElement(elementType: "hr"))
         } else if line.isMatching(divMatch, in: range) {
             parseDivElement(trimmed)
-        } else if trimmed.isMatching(listMatch) {
+        } else if (trimmed.isMatching(listMatch) && inList) || line.isMatching(listMatch) {
+            // We should only allow the trimmed list to start if we are already in a list,
+            // else we only create new lists when they are at the start of the line
             parseListElement(line)
         } else if line.isMatching(blockMatch, in: range) {
             parseBlockquoteElement(line)

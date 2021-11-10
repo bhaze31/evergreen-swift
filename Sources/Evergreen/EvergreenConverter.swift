@@ -8,6 +8,10 @@
 import Foundation
 
 public class EvergreenConverter {
+    var markHeaders = false
+    
+    let textReplacer = try! NSRegularExpression(pattern: "[^\\w]", options: [])
+
     let selfClosingElements = ["hr", "br"]
     let boldReplacement = try! NSRegularExpression(pattern: "<b!>.*<!b>", options: [])
     
@@ -116,17 +120,6 @@ public class EvergreenConverter {
         return table + "</table>"
     }
     
-//    func createAnchorReplacement(element: EvergreenElement) -> String {
-//        let src = element.src ?? ""
-//        var anchor = "<a href=\"\(src)\""
-//        if let title = element.linkAlt {
-//            anchor += " title=\"\(title)\""
-//        }
-//        
-//        let text = element.linkText ?? ""
-//        return anchor + ">\(text)</a>"
-//    }
-    
     func createElement(element: EvergreenElement) -> String {
         if element.elementType == "i" {
             return createImageElement(element: element)
@@ -161,6 +154,11 @@ public class EvergreenConverter {
         
         if let id = element.id {
             stringElement += " id=\"\(id)\""
+        } else if element.elementType == "h1" && markHeaders {
+            let text = element.text
+                .replaceAll(matching: textReplacer, with: "")
+                .lowercased()
+            stringElement += " id=\"\(text)\""
         }
         
         stringElement += ">"
@@ -185,7 +183,8 @@ public class EvergreenConverter {
         self.elements = elements
     }
     
-    public func convert() -> String {
+    public func convert(markHeaders _mH: Bool = false) -> String {
+        markHeaders = _mH
         return elements.map { element in createElement(element: element) }.joined(separator: "\n")
     }
 }

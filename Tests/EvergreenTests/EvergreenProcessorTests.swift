@@ -8,8 +8,7 @@ final class EvergreenProcessorTests: XCTestCase {
 
         expected.forEach { item in
             let index = classes.firstIndex(of: item)
-            XCTAssertNotNil(index, "Testing: \(item)")
-            
+            XCTAssertNotNil(index, item)
         }
     }
 
@@ -656,7 +655,13 @@ final class EvergreenProcessorTests: XCTestCase {
 """)
     }
     
+    // MARK: Unit tests
     
+    func testSettingHeaderElementsWithNoTable() {
+        let processor = EvergreenProcessor(lines: [])
+        processor.setHeaderElementsForTable("A test line")
+        
+    }
 
     static var allTests = [
         ("testHeaderProcessor", testHeaderProcessed),
@@ -675,6 +680,7 @@ final class EvergreenProcessorTests: XCTestCase {
         ("testSubDivProcessor", testSubDivProcessed),
         ("testTableProcessor", testTableProcessed),
         ("testTableHeaderWithColumnDifference", testTableHeaderWithColumnDifference),
-        ("testCodeProcessor", testCodeProcessed)
+        ("testCodeProcessor", testCodeProcessed),
+        ("testSettingHeaderElementsWithNoTable", testSettingHeaderElementsWithNoTable)
     ]
 }

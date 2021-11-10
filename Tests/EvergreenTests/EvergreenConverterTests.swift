@@ -181,6 +181,18 @@ final class EvergreenConverterTests: XCTestCase {
         let result = converter.convert()
         XCTAssertEqual(result, "<pre><code>function hello() {\n  return \"Hello World!\"\n}</code></pre>")
     }
+    
+    func testHeaderIDs() {
+        let elements = [
+            EvergreenElement(elementType: "h1", text: "Test 123!"),
+            EvergreenElement(elementType: "h1", text: "And S P A C E S. Period."),
+            EvergreenElement(elementType: "h2", text: "No ID")
+        ]
+        
+        let converter = EvergreenConverter(elements: elements)
+        let result = converter.convert(markHeaders: true)
+        XCTAssertEqual(result, "<h1 id=\"test123\">Test 123!</h1>\n<h1 id=\"andspacesperiod\">And S P A C E S. Period.</h1>\n<h2>No ID</h2>")
+    }
 
     static var allTests = [
         ("testImageConverter", testImageConverted),
@@ -192,6 +204,7 @@ final class EvergreenConverterTests: XCTestCase {
         ("testLinkElementConverter", testLinkElementConverted),
         ("testOrderedListElementConverter", testOrderedListElementConverted),
         ("testBlockquoteElementConverter", testBlockquoteElementConverted),
-        ("testCodeConverter", testCodeConverted)
+        ("testCodeConverter", testCodeConverted),
+        ("testHeaderIDs", testHeaderIDs)
     ]
 }

@@ -32,6 +32,7 @@ public class EvergreenElement {
             return nil
         }
     }
+
     var alignment: TableAlignment = .left
 
     init(elementType: String) {
