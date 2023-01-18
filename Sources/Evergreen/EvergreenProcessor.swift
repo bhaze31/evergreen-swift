@@ -383,9 +383,6 @@ public class EvergreenProcessor {
         let listType = nextListType(line)
 
         if inList {
-            // Check if indentation changed, and if so set the current list
-            let indentRegex = try! NSRegularExpression(pattern: " +", options: [])
-            
             // Check if list types are different, and if they are create a new list
             if listType != currentListType {
                 // We need to create a new list

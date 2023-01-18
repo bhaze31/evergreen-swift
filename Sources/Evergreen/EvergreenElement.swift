@@ -5,7 +5,7 @@
 //  Created by Brian Hasenstab on 4/10/20.
 //
 
-public class EvergreenElement {
+public class EvergreenElement: Codable {
     var elementType: String
     var parent: EvergreenElement?
     var children: [EvergreenElement] = []
@@ -68,7 +68,7 @@ public class EvergreenElement {
     }
 }
 
-public enum TableAlignment: String {
+public enum TableAlignment: String, Codable {
     case left, center, right
 }
 
