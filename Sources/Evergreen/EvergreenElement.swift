@@ -6,24 +6,24 @@
 //
 
 public class EvergreenElement: Codable {
-    var elementType: String
-    var parent: EvergreenElement?
-    var children: [EvergreenElement] = []
+    public var elementType: String
+    public var parent: EvergreenElement?
+    public var children: [EvergreenElement] = []
     
-    var id: String?
-    var classes: [String] = []
-    var identifier: String?
-    var divIdentifier: String?
+    public var id: String?
+    public var classes: [String] = []
+    public var identifier: String?
+    public var divIdentifier: String?
     
-    var src: String?
-    var linkText: String?
-    var linkAlt: String?
+    public var src: String?
+    public var linkText: String?
+    public var linkAlt: String?
     
-    var text: String = ""
+    public var text: String = ""
     
-    var listType: String?
+    public var listType: String?
 
-    var numColumns: Int? {
+    public var numColumns: Int? {
         get {
             if elementType == "table" {
                 return children.first?.children.count
@@ -33,35 +33,35 @@ public class EvergreenElement: Codable {
         }
     }
 
-    var alignment: TableAlignment = .left
+    public var alignment: TableAlignment = .left
 
-    init(elementType: String) {
+    public init(elementType: String) {
         self.elementType = elementType
     }
     
-    init(elementType: String, text: String) {
+    public init(elementType: String, text: String) {
         self.elementType = elementType
         self.text = text
     }
     
-    init(elementType: String, src: String, linkText: String?, linkAlt: String?) {
+    public init(elementType: String, src: String, linkText: String?, linkAlt: String?) {
         self.elementType = elementType
         self.src = src
         self.linkText = linkText
         self.linkAlt = linkAlt
     }
     
-    init(elementType: String, parent: EvergreenElement?) {
+    public init(elementType: String, parent: EvergreenElement?) {
         self.elementType = elementType
         self.parent = parent
     }
     
-    init(elementType: String, divIdentifier: String) {
+    public init(elementType: String, divIdentifier: String) {
         self.elementType = elementType
         self.divIdentifier = divIdentifier
     }
     
-    func setImageInformation(src: String, alt: String?, title: String?) {
+    public func setImageInformation(src: String, alt: String?, title: String?) {
         self.src = src
         self.linkText = alt
         self.linkAlt = title
