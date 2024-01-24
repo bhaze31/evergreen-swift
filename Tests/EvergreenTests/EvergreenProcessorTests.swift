@@ -599,7 +599,7 @@ final class EvergreenProcessorTests: XCTestCase {
     
     func testCodeProcessed() {
         let lines: Array<String> = [
-            "```",
+            "```:swift",
             "function hello() {",
             "  return \"Hello World!\"",
             "",
@@ -612,7 +612,8 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let pre = elements.first!
         XCTAssertEqual(pre.elementType, "pre")
-        
+        XCTAssert(pre.classes.contains("language-swift"))
+
         let code = pre.children.first!
         XCTAssertEqual(code.elementType, "code")
         XCTAssertEqual(code.text, "function hello() {\n  return \"Hello World!\"\n\n}")

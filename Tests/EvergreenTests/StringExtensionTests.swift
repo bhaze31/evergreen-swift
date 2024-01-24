@@ -34,7 +34,7 @@ final class StringExtensionTests: XCTestCase {
         let str = "replace replace none replace"
         let match = try! NSRegularExpression(pattern: "replace", options: [])
         
-        let range = match.firstMatch(in: str, options: [], range: str.fullRange())?.range
+        let range = match.firstMatch(in: str, options: [], range: str.fullRange)?.range
         
         let replaced = str.replaceFirst(matching: match, with: "_", in: range)
         
@@ -46,7 +46,7 @@ final class StringExtensionTests: XCTestCase {
 
         let match = try! NSRegularExpression(pattern: "replace", options: [])
 
-        let range = match.firstMatch(in: str, options: [], range: str.fullRange())?.range
+        let range = match.firstMatch(in: str, options: [], range: str.fullRange)?.range
         
         let badMatch = try! NSRegularExpression(pattern: "none", options: [])
         
@@ -60,7 +60,7 @@ final class StringExtensionTests: XCTestCase {
         
         let match = try! NSRegularExpression(pattern: "replace", options: [])
         
-        let range = match.firstMatch(in: str, options: [], range: str.fullRange())?.range
+        let range = match.firstMatch(in: str, options: [], range: str.fullRange)?.range
         
         let badMatch = try! NSRegularExpression(pattern: "none", options: [])
         
