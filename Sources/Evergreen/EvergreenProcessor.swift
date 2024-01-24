@@ -78,6 +78,7 @@ public class EvergreenProcessor {
     let boldItalicMatch = try! NSRegularExpression(pattern: "\\*{3}[^\\*]+\\*{3}", options: [])
     
     let codeMatch = try! NSRegularExpression(pattern: "^```", options: [])
+    let codeWithClass = try! NSRegularExpression(pattern: "^```:[a-zA-Z]+$", options: [])
     let htmlMatch = try! NSRegularExpression(pattern: "<[\\/]?[^>]+>", options: [])
 
     // MARK: Content
@@ -120,7 +121,7 @@ public class EvergreenProcessor {
     }
 
     func linkParser(line: String, in givenRange: NSRange? = nil) -> (String, String, String?) {
-        let range = givenRange ?? line.fullRange()
+        let range = givenRange ?? line.fullRange
         let anchorText = line.stringFromMatch(altMatch, in: range).replaceSubstrings(["![", "[", "]"])
         
         let descText = line.stringFromMatch(descMatch, in: range).replaceSubstrings(["(", ")"])
@@ -139,7 +140,7 @@ public class EvergreenProcessor {
     func parseLinks(element: EvergreenElement) {
         var lineCopy = element.text
         
-        while let match = linkMatch.firstMatch(in: lineCopy, options: [], range: lineCopy.fullRange()) {
+        while let match = linkMatch.firstMatch(in: lineCopy, options: [], range: lineCopy.fullRange) {
             let (anchorText, href, altText) = linkParser(line: lineCopy, in: match.range)
             
             let identifier = UUID()
@@ -155,7 +156,7 @@ public class EvergreenProcessor {
     }
     
     func splitItalicMatch(element: EvergreenElement, in range: NSRange? = nil) -> EvergreenElement {
-        let matchRange = range ?? element.text.fullRange()
+        let matchRange = range ?? element.text.fullRange
         
         let text = element.text.stringFromMatch(italicMatch, in: matchRange).replaceSubstrings(["*"]).trim()
         let italicElement = EvergreenElement(elementType: "i", text: text)
@@ -169,7 +170,7 @@ public class EvergreenProcessor {
     }
     
     func splitBoldMatch(element: EvergreenElement, in range: NSRange? = nil) -> EvergreenElement {
-        let matchRange = range ?? element.text.fullRange()
+        let matchRange = range ?? element.text.fullRange
         
         let match = element.text.stringFromMatch(boldMatch, in: matchRange)
         let text = match.replaceSubstrings(["**"]).trim()
@@ -183,7 +184,7 @@ public class EvergreenProcessor {
     }
     
     func splitDoubleMatch(element: EvergreenElement) -> EvergreenElement {
-        let text = element.text.stringFromMatch(boldItalicMatch, in: element.text.fullRange()).replaceSubstrings(["***"]).trim()
+        let text = element.text.stringFromMatch(boldItalicMatch, in: element.text.fullRange).replaceSubstrings(["***"]).trim()
         let identifier = UUID().uuidString
 
         let italicElement = EvergreenElement(elementType: "i", text: text)
@@ -214,7 +215,7 @@ public class EvergreenProcessor {
     func parseHeader(_ line: String) -> EvergreenElement {
         let headerMatch = try! NSRegularExpression(pattern: "^#+", options: [])
         
-        let matches = headerMatch.matches(in: line, options: [], range: line.fullRange())
+        let matches = headerMatch.matches(in: line, options: [], range: line.fullRange)
         let match = matches.first!
         
         let originalText = line.replaceAll(matching: headerMatch, with: "").trim()
@@ -249,7 +250,7 @@ public class EvergreenProcessor {
         return textElement
     }
     
-    // MARK: <img /> Element
+    // MARK: <img> Element
     func parseImageElement(_ line: String) -> EvergreenElement {
         let (alt, src, title) = linkParser(line: line)
         let element = EvergreenElement(elementType: "img")
@@ -307,7 +308,7 @@ public class EvergreenProcessor {
         let indentRegex = try! NSRegularExpression(pattern: " +", options: [])
         
         if line.starts(with: " ") && inList {
-            let indentLength = indentRegex.firstMatch(in: line, options: [], range: line.fullRange())!.range.length
+            let indentLength = indentRegex.firstMatch(in: line, options: [], range: line.fullRange)!.range.length
             
             if currentListIndentLength < indentLength {
                 // We are indenting more than before, create a sub list
@@ -358,7 +359,7 @@ public class EvergreenProcessor {
             currentListType = listType
             inList = true
             if line.starts(with: " ") {
-                let indentLength = indentRegex.firstMatch(in: line, options: [], range: line.fullRange())!.range.length
+                let indentLength = indentRegex.firstMatch(in: line, options: [], range: line.fullRange)!.range.length
                 currentListIndentLength = indentLength
             }
             
@@ -421,7 +422,7 @@ public class EvergreenProcessor {
     // MARK: <blockquote> Element
     func parseBlockquoteElement(_ line: String) {
         let quoteRegex = try! NSRegularExpression(pattern: "^>+", options: [])
-        let quoteIndent = quoteRegex.firstMatch(in: line, options: [], range: line.fullRange())!.range.length
+        let quoteIndent = quoteRegex.firstMatch(in: line, options: [], range: line.fullRange)!.range.length
         
         let trimmed = line.removeAll(matching: blockMatch).trim()
         
@@ -589,7 +590,7 @@ public class EvergreenProcessor {
         if line.isMatching(htmlMatch) {
             let open = try! NSRegularExpression(pattern: "<", options: [])
             let close = try! NSRegularExpression(pattern: ">", options: [])
-            while let match = htmlMatch.firstMatch(in: escaped, options: [], range: escaped.fullRange()) {
+            while let match = htmlMatch.firstMatch(in: escaped, options: [], range: escaped.fullRange) {
                 escaped = escaped.replaceFirst(matching: close, with: "&gt;", in: match.range, options: [])
                 escaped = escaped.replaceFirst(matching: open, with: "&lt;", in: match.range, options: [])
             }
@@ -648,7 +649,7 @@ public class EvergreenProcessor {
     }
     
     func parseElement(_ line: String)  {
-        let range = line.fullRange()
+        let range = line.fullRange
         let trimmed = line.trim()
 
         if line.isMatching(horizontalMatch, in: range) {
@@ -673,6 +674,15 @@ public class EvergreenProcessor {
                 
                 let pre = EvergreenElement(elementType: "pre")
                 pre.children = [currentCode!]
+                
+                if let match = codeWithClass.firstMatch(in: trimmed, range: trimmed.fullRange) {
+                    let classString = String(trimmed[Range(match.range, in: trimmed)!])
+                    if let language = classString.components(separatedBy: [":"]).last {
+                        // Prism.js uses language-xxxxx to determine which language to use
+                        pre.classes.append("language-\(language)")
+                    }
+                }
+
                 addToElements(pre)
             }
         } else if trimmed.count > 0 {

@@ -21,7 +21,7 @@ extension String {
     /// - Returns: The new string with replacements
 
     func replaceAll(matching: NSRegularExpression, with template: String, options: NSRegularExpression.MatchingOptions = []) -> String {
-        return matching.stringByReplacingMatches(in: self, options: options, range: self.fullRange(), withTemplate: template)
+        return matching.stringByReplacingMatches(in: self, options: options, range: self.fullRange, withTemplate: template)
     }
 
     /// Replace first instance of `matching` in the string with `with`
@@ -41,7 +41,7 @@ extension String {
         if let r = range {
             matchedRange = r
         } else {
-            guard let match = matching.firstMatch(in: self, options: [], range: fullRange()) else {
+            guard let match = matching.firstMatch(in: self, options: [], range: fullRange) else {
                 return self
             }
             matchedRange = match.range
@@ -94,7 +94,7 @@ extension String {
     /// - Returns: True or false depending if there was a match or not
 
     func isMatching(_ match: NSRegularExpression, in givenRange: NSRange? = nil, options: NSRegularExpression.MatchingOptions = []) -> Bool {
-        let range = givenRange ?? fullRange()
+        let range = givenRange ?? fullRange
         if let _ = match.firstMatch(in: self, options: options, range: range) {
             return true
         }
@@ -113,7 +113,7 @@ extension String {
     /// - Returns: A new string with the characters replaced
 
     func stringFromMatch(_ regex: NSRegularExpression, in range: NSRange? = nil, options: NSRegularExpression.MatchingOptions = []) -> String {
-        let matchRange = range ?? fullRange()
+        let matchRange = range ?? fullRange
 
         guard let match = regex.firstMatch(in: self, options: options, range: matchRange) else {
             return ""
@@ -137,13 +137,13 @@ extension String {
     ///
     /// - Returns: NSRange from 0 to count of characters
 
-    func fullRange() -> NSRange {
+    var fullRange: NSRange {
         return NSRange(location: 0, length: self.count)
     }
     
     /// Insert a substring into a string, based on a regular expression match
     mutating func replaceRange(matching: NSRegularExpression, with: String, options: NSRegularExpression.MatchingOptions = [], range _range: NSRange? = nil) {
-        let range = _range ?? self.fullRange()
+        let range = _range ?? self.fullRange
         let _match = matching.firstMatch(in: self, options: options, range: range)
         
         guard let match = _match?.range else { return }
