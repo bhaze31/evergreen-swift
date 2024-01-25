@@ -158,7 +158,7 @@ final class EvergreenConverterTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [tableHeader, tableDashes, tableData])
         
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let converter = EvergreenConverter(elements: elements)
         let result = converter.convert()
@@ -175,7 +175,7 @@ final class EvergreenConverterTests: XCTestCase {
         ];
         
         let processor = EvergreenProcessor(lines: lines)
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let converter = EvergreenConverter(elements: elements)
         let result = converter.convert()

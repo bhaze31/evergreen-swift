@@ -4,11 +4,7 @@ Evergreen is a data formatter that converts between Markdown, opinionated JSON, 
 
 ```
 {
-    title: The name of the Evergreen content,
-    authors: A list of people who edited the content,
-    createdAt: The date the content was started,
-    updatedAt: The date the content was last updated,
-    tags: A list of Evergreen tags,
+    metadata: Information to be 
     content: The root evergreen element
 }
 ```

@@ -13,6 +13,17 @@ public class EvergreenProcessor {
         case O_LIST, U_LIST
     }
     
+    // MARK: Metadata Variables
+    var isFirstLine = true
+    var inMeta = false
+    var authors: [String] = []
+    var title: String = ""
+    var description: String = ""
+    var slug: String = ""
+    var tags: [String] = []
+    var publishedAtDate = Date()
+    var updatedAtDate: Date?
+    
     // MARK: List Variables
     var inList = false
     var currentList: EvergreenElement?
@@ -40,6 +51,9 @@ public class EvergreenProcessor {
     var currentCode: EvergreenElement?
 
     // MARK: Regular Expressions
+    let metadataWrapperMatch = try! NSRegularExpression(pattern: "^/={2,}$", options: [])
+    let metadataContentMatch = try! NSRegularExpression(pattern: "^/ .*", options: [])
+    
     let listMatch = try! NSRegularExpression(pattern: "^([0-9]+\\.|(-|\\+|\\*))", options: [])
     let orderedMatch = try! NSRegularExpression(pattern: "^[0-9]+\\.", options: [])
     
@@ -648,11 +662,44 @@ public class EvergreenProcessor {
         }
     }
     
+    func parseMetaData(_ line: String) {
+        var tag = line
+        _ = tag.removeFirst()
+        let parts = tag.trim().split(separator: ":", maxSplits: 1).map { String($0) }
+        
+        if parts.count < 2 {
+            // We don't have a value tag:value, return
+            return
+        }
+        
+        let tagName = parts.first!
+        let value = parts.last!.trim()
+        
+        switch tagName {
+            case "author":
+                authors.append(value)
+            case "title":
+                title = value
+            case "description":
+                description = value
+            case "slug":
+                slug = value
+            case "tags":
+                tags = value.split(separator: ",").map { String($0).trim() }
+            default:
+                return
+        }
+    }
+    
     func parseElement(_ line: String)  {
         let range = line.fullRange
         let trimmed = line.trim()
-
-        if line.isMatching(horizontalMatch, in: range) {
+        
+        if isFirstLine && trimmed.isMatching(metadataWrapperMatch) {
+            inMeta = true
+        } else if inMeta && trimmed.isMatching(metadataContentMatch) {
+            parseMetaData(trimmed)
+        } else if line.isMatching(horizontalMatch, in: range) {
             addToElements(EvergreenElement(elementType: "hr"))
         } else if line.isMatching(divMatch, in: range) {
             parseDivElement(trimmed)
@@ -700,6 +747,14 @@ public class EvergreenProcessor {
             }
         }
         
+        // If we skip a line in metadata, or close the tag, generate metadata
+        // and return
+        if inMeta && !isFirstLine && (!trimmed.isMatching(metadataContentMatch) || trimmed.isMatching(metadataWrapperMatch)) {
+            inMeta = false
+        }
+        
+        isFirstLine = false
+        
         if line.isMatching(breakMatch, in: range) {
             addToElements(EvergreenElement(elementType: "br"))
         }
@@ -709,21 +764,36 @@ public class EvergreenProcessor {
         self.lines = lines
     }
     
-    public func parse() -> Elements {
+    public func parse() -> EvergreenDocument {
         elements = Elements()
-        resetAllSpecialElements()
+        resetAllSpecialElements(isFirstLine: true)
         inDiv = false
         
         lines.forEach { line in
             parseElement(line)
         }
         
-        return elements
+        let document = EvergreenDocument(
+            metadata: EvergreenMetadata(
+                authors: authors,
+                title: title,
+                description: description,
+                slug: slug,
+                tags: tags,
+                publishedAtDate: publishedAtDate,
+                updatedAtDate: updatedAtDate
+            ),
+            content: elements
+        )
+            
+        
+        return document
     }
     
     private
     
-    func resetAllSpecialElements() {
+    func resetAllSpecialElements(isFirstLine: Bool = false) {
+        self.isFirstLine = isFirstLine
         self.inList = false
         self.currentList = nil
         self.currentListType = nil

@@ -24,7 +24,7 @@ final class EvergreenProcessorTests: XCTestCase {
             
             processor.updateLines(lines: [header])
             
-            let elements = processor.parse()
+            let elements = processor.parse().content
             let textElement = elements.first!
             
             XCTAssertEqual(textElement.text, "A header ###")
@@ -34,7 +34,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let headerWithID = "# Hello Old Friend {#clapton}"
         processor.updateLines(lines: [headerWithID])
         
-        var elements = processor.parse()
+        var elements = processor.parse().content
         var textElement = elements.first!
         
         XCTAssertEqual(textElement.text, "Hello Old Friend")
@@ -43,7 +43,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let headerWithClasses = "# Riding with the King {.clapton .bb}"
         processor.updateLines(lines: [headerWithClasses])
         
-        elements = processor.parse()
+        elements = processor.parse().content
         textElement = elements.first!
         
         XCTAssertEqual(textElement.text, "Riding with the King")
@@ -52,7 +52,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let headerWithIdAndClasses = "# Layla {.clapton .derek #blues}"
         processor.updateLines(lines: [headerWithIdAndClasses])
         
-        elements = processor.parse()
+        elements = processor.parse().content
         textElement = elements.first!
         
         XCTAssertEqual(textElement.text, "Layla")
@@ -64,7 +64,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let header = "## A **bolded** statement"
         
         let processor = EvergreenProcessor(lines: header)
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let element = elements.first!
         
@@ -82,7 +82,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let paragraphWithIDAndClasses = "A last paragraph {.whats .happenin #baskins}"
         
         let processor = EvergreenProcessor(lines: [paragraph, paragraphWithID, paragraphWithClasses, paragraphWithIDAndClasses])
-        let elements = processor.parse()
+        let elements = processor.parse().content
         var textElement = elements.first!
         
         XCTAssertEqual(textElement.text, paragraph)
@@ -114,7 +114,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let paragraphWithLinks = "A paragraph [that](title two links) has at least [two](reffin) links."
         
         let processor = EvergreenProcessor(lines: paragraphWithLinks)
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let element = elements.first!
         
@@ -138,7 +138,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let paragraphWithBold = "A ** bold ** statement"
         
         let processor = EvergreenProcessor(lines: paragraphWithBold)
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let element = elements.first!
         
@@ -153,7 +153,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let paragraphWithItalic = "A * slanted* statement"
         
         let processor = EvergreenProcessor(lines: paragraphWithItalic)
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let element = elements.first!
         
@@ -168,7 +168,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let paragraphWithBoldItalic = "A ***boldly italic*** statement"
         
         let processor = EvergreenProcessor(lines: paragraphWithBoldItalic)
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let element = elements.first!
         
@@ -188,7 +188,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let paragraph = "A **bold** statement *slanted* ***words***"
         
         let processor = EvergreenProcessor(lines: paragraph)
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let element = elements.first!
         
@@ -209,7 +209,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let image = "![Alt Image](source and a title)"
         let titleLessImage = "![Alt Image](source)"
         let processor = EvergreenProcessor(lines: [image, titleLessImage])
-        let elements = processor.parse()
+        let elements = processor.parse().content
         let imageElement = elements.first!
         
         XCTAssertEqual(imageElement.linkText, "Alt Image")
@@ -227,7 +227,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let breakString = "  "
         let processor = EvergreenProcessor(lines: breakString)
         
-        let elements = processor.parse()
+        let elements = processor.parse().content
         let element = elements.first!
         
         XCTAssertEqual(element.elementType, "br")
@@ -240,7 +240,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [hr1, hr2, hr3])
         
-        var elements = processor.parse()
+        var elements = processor.parse().content
         
         elements.forEach { element in
             XCTAssertEqual(element.elementType, "hr")
@@ -248,7 +248,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         processor.lines = ["*-*"]
         
-        elements = processor.parse()
+        elements = processor.parse().content
         let element = elements.first!
         
         XCTAssertEqual(element.elementType, "ul")
@@ -260,7 +260,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [listItem1, listItem2])
         
-        let elements = processor.parse()
+        let elements = processor.parse().content
 
         XCTAssertEqual(elements.count, 1)
             
@@ -288,7 +288,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [listItem1, listItem2, listItem3])
         
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         XCTAssertEqual(elements.count, 1)
         
@@ -316,7 +316,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [line1, line2, line3, line4, line5, line6, line7])
         
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         XCTAssertEqual(elements.count, 1)
         
@@ -353,7 +353,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [line1, line2])
         
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let element = elements.first!
         let children = element.children
@@ -373,7 +373,7 @@ final class EvergreenProcessorTests: XCTestCase {
     func testBlockquoteProcessed() {
         let quote = "> Alls well that ends well"
         let processer = EvergreenProcessor(lines: quote)
-        let elements = processer.parse()
+        let elements = processer.parse().content
         
         let element = elements.first!
         
@@ -388,7 +388,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let quote4 = ">>> In the middle of the night"
         let quote5 = "> To see that his dream had come true"
         let processor = EvergreenProcessor(lines: [quote1, quote2, quote3, quoteBreak, quote4, quote5])
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         XCTAssertEqual(elements.count, 1)
         
@@ -416,7 +416,7 @@ final class EvergreenProcessorTests: XCTestCase {
         let quote4 = ">>> In the middle of the night"
         let quote5 = "> To see that his dream had come true {{#bad_id .not_valued}}"
         let processor = EvergreenProcessor(lines: [quote1, quote2, quote3, quoteBreak, quote4, quote5])
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         XCTAssertEqual(elements.count, 1)
         
@@ -459,7 +459,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [divOpen, data, divClose])
         
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let divElement = elements.first!
         
@@ -476,7 +476,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [divOpen, data, divClass])
         
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let divElement = elements.first!
         
@@ -496,7 +496,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [divOpen, subDivOpen, subData, subDivClose, data, divClose])
         
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let divElement = elements.first!
         
@@ -518,7 +518,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [tableHeader, tableDashes, tableData])
         
-        let elements = processor.parse()
+        let elements = processor.parse().content
         let table = elements.first!
         XCTAssertEqual(table.children.count, 2)
         XCTAssertEqual(table.numColumns, 3)
@@ -560,7 +560,7 @@ final class EvergreenProcessorTests: XCTestCase {
         
         let processor = EvergreenProcessor(lines: [tableHeader, tableDashes, row1Data, row2Data])
         
-        let elements = processor.parse()
+        let elements = processor.parse().content
         let table = elements.first!
         XCTAssertEqual(table.children.count, 3)
         XCTAssertEqual(table.numColumns, 3)
@@ -608,7 +608,7 @@ final class EvergreenProcessorTests: XCTestCase {
         ]
         
         let processor = EvergreenProcessor(lines: lines)
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let pre = elements.first!
         XCTAssertEqual(pre.elementType, "pre")
@@ -635,7 +635,7 @@ final class EvergreenProcessorTests: XCTestCase {
         ]
         
         let processor = EvergreenProcessor(lines: lines)
-        let elements = processor.parse()
+        let elements = processor.parse().content
         
         let pre = elements.first!
         XCTAssertEqual(pre.elementType, "pre")
@@ -655,13 +655,72 @@ final class EvergreenProcessorTests: XCTestCase {
 &lt;/html&gt;
 """)
     }
-    
-    // MARK: Unit tests
-    
-    func testSettingHeaderElementsWithNoTable() {
-        let processor = EvergreenProcessor(lines: [])
-        processor.setHeaderElementsForTable("A test line")
+
+    func testMetadataContent() {
+        let lines: Array<String> = [
+            "/==",
+            "/ author: Brian Hasenstab <bhaze2263@gmail.com>",
+            "/ author: mbarth@gmail.com",
+            "/ author: Melissa Bartholomew",
+            "/ title: Introduction to Evergreen Documents",
+            "/ description: How to create an Evergreen document, a markup extension",
+            "/ slug: intro-to-evergreen-docs",
+            "/ tags: swift, vapor",
+            "/=="
+        ]
         
+        let processor = EvergreenProcessor(lines: lines)
+        let document = processor.parse()
+        let authors = document.metadata.authors
+        XCTAssertEqual(authors.count, 3)
+        
+        // It should be able to parse both the name and the email
+        let both = authors.filter { $0.email == "bhaze2263@gmail.com" && $0.name == "Brian Hasenstab" }
+        XCTAssertEqual(both.count, 1)
+        
+        // It should recognize that the email is the match
+        let emailOnly = authors.filter { $0.email == "mbarth@gmail.com" && $0.name == "" }
+        XCTAssertEqual(emailOnly.count, 1)
+        
+        // It should recognize neither match and set the name
+        let nameOnly = authors.filter { $0.email == "" && $0.name == "Melissa Bartholomew" }
+        XCTAssertEqual(nameOnly.count, 1)
+        
+        XCTAssertEqual(document.metadata.title, "Introduction to Evergreen Documents")
+        XCTAssertEqual(document.metadata.slug, "intro-to-evergreen-docs")
+        XCTAssertEqual(document.metadata.description, "How to create an Evergreen document, a markup extension")
+        XCTAssertEqual(document.metadata.tags, ["swift", "vapor"])
+    }
+    
+    func testGeneratesSlugFromTitle() {
+        let lines: Array<String> = [
+            "/==",
+            "/ author: Brian Hasenstab <bhaze2263@gmail.com>",
+            "/ title: Introduction to Evergreen Documents",
+            "/ description: How to create an Evergreen document, a markup extension",
+            "/=="
+        ]
+
+        let processor = EvergreenProcessor(lines: lines)
+        let document = processor.parse()
+        
+        XCTAssertEqual(document.metadata.title, "Introduction to Evergreen Documents")
+        XCTAssertEqual(document.metadata.slug, "introduction-to-evergreen-documents")
+    }
+    
+    func testGeneratesDefaultTitle() {
+        let lines: Array<String> = [
+            "/==",
+            "/ author: Brian Hasenstab <bhaze2263@gmail.com>",
+            "/ description: How to create an Evergreen document, a markup extension",
+            "/=="
+        ]
+
+        let processor = EvergreenProcessor(lines: lines)
+        let document = processor.parse()
+        
+        XCTAssert(document.metadata.title.starts(with: "New document "))
+        XCTAssert(document.metadata.slug.starts(with: "new-document-"))
     }
 
     static var allTests = [
@@ -681,7 +740,6 @@ final class EvergreenProcessorTests: XCTestCase {
         ("testSubDivProcessor", testSubDivProcessed),
         ("testTableProcessor", testTableProcessed),
         ("testTableHeaderWithColumnDifference", testTableHeaderWithColumnDifference),
-        ("testCodeProcessor", testCodeProcessed),
-        ("testSettingHeaderElementsWithNoTable", testSettingHeaderElementsWithNoTable)
+        ("testCodeProcessor", testCodeProcessed)
     ]
 }

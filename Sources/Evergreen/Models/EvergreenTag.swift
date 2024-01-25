@@ -7,7 +7,6 @@
 
 import Foundation
 
-public class EvergreenTag: Identifiable, Codable {
-    public var id: UUID
+public class EvergreenTag: Codable {
     public var title: String
 }
