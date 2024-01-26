@@ -8,13 +8,13 @@
 import Foundation
 
 public class EvergreenMetadata: Codable {
-    var authors: [EvergreenAuthor]
-    var title: String
-    var description: String
-    var slug: String
-    var tags: [String]
-    var publishedAtDate: Date
-    var updatedAtDate: Date?
+    public var authors: [EvergreenAuthor]
+    public var title: String
+    public var description: String
+    public var slug: String
+    public var tags: [String]
+    public var publishedAtDate: Date
+    public var updatedAtDate: Date?
     
     public init(authors: [String], title: String, description: String, slug: String, tags: [String], publishedAtDate: Date, updatedAtDate: Date?) {
         let evergreenAuthors = authors.map { authorString in

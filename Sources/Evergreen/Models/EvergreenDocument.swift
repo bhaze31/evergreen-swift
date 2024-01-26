@@ -8,10 +8,10 @@
 import Foundation
 
 public class EvergreenDocument: Codable {
-    var metadata: EvergreenMetadata
-    var content: [EvergreenElement]
+    public var metadata: EvergreenMetadata
+    public var content: [EvergreenElement]
     
-    init(metadata: EvergreenMetadata, content: [EvergreenElement]) {
+    public init(metadata: EvergreenMetadata, content: [EvergreenElement]) {
         self.metadata = metadata
         self.content = content
     }
