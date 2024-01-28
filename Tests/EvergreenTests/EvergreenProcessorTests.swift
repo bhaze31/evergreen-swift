@@ -666,7 +666,9 @@ final class EvergreenProcessorTests: XCTestCase {
             "/ description: How to create an Evergreen document, a markup extension",
             "/ slug: intro-to-evergreen-docs",
             "/ tags: swift, vapor",
-            "/=="
+            "/==",
+            "",
+            "# Hey now"
         ]
         
         let processor = EvergreenProcessor(lines: lines)
@@ -690,6 +692,8 @@ final class EvergreenProcessorTests: XCTestCase {
         XCTAssertEqual(document.metadata.slug, "intro-to-evergreen-docs")
         XCTAssertEqual(document.metadata.description, "How to create an Evergreen document, a markup extension")
         XCTAssertEqual(document.metadata.tags, ["swift", "vapor"])
+        
+        XCTAssertEqual(document.content.count, 1)
     }
     
     func testGeneratesSlugFromTitle() {

@@ -695,8 +695,10 @@ public class EvergreenProcessor {
         let range = line.fullRange
         let trimmed = line.trim()
         
-        if isFirstLine && trimmed.isMatching(metadataWrapperMatch) {
-            inMeta = true
+        if trimmed.isMatching(metadataWrapperMatch) {
+            if isFirstLine {
+                inMeta = true
+            }
         } else if inMeta && trimmed.isMatching(metadataContentMatch) {
             parseMetaData(trimmed)
         } else if line.isMatching(horizontalMatch, in: range) {
