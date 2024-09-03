@@ -16,9 +16,9 @@ extension String {
         return self.trimmingCharacters(in: characters)
     }
 }
-let codeWithClass = try! NSRegularExpression(pattern: "^```:[a-zA-Z]+$", options: [])
+let codeWithClass = try! NSRegularExpression(pattern: "^```[a-zA-Z]+$", options: [])
 
-let line = "```:swift"
+let line = "```swift"
 if let match = codeWithClass.firstMatch(in: line, range: line.fullRange) {
     print(match)
 } else {

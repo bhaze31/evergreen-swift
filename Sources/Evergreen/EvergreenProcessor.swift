@@ -92,7 +92,7 @@ public class EvergreenProcessor {
     let boldItalicMatch = try! NSRegularExpression(pattern: "\\*{3}[^\\*]+\\*{3}", options: [])
     
     let codeMatch = try! NSRegularExpression(pattern: "^```", options: [])
-    let codeWithClass = try! NSRegularExpression(pattern: "^```:[a-zA-Z]+$", options: [])
+    let codeWithClass = try! NSRegularExpression(pattern: "^```[a-zA-Z]+$", options: [])
     let htmlMatch = try! NSRegularExpression(pattern: "<[\\/]?[^>]+>", options: [])
 
     // MARK: Content
@@ -726,10 +726,9 @@ public class EvergreenProcessor {
                 
                 if let match = codeWithClass.firstMatch(in: trimmed, range: trimmed.fullRange) {
                     let classString = String(trimmed[Range(match.range, in: trimmed)!])
-                    if let language = classString.components(separatedBy: [":"]).last {
-                        // Prism.js uses language-xxxxx to determine which language to use
-                        pre.classes.append("language-\(language)")
-                    }
+                    let language = classString.replacingOccurrences(of: "```", with: "")
+                    // Prism.js uses language-xxxxx to determine which language to use
+                      pre.classes.append("language-\(language)")
                 }
 
                 addToElements(pre)

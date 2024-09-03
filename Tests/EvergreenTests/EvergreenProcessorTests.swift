@@ -599,7 +599,7 @@ final class EvergreenProcessorTests: XCTestCase {
     
     func testCodeProcessed() {
         let lines: Array<String> = [
-            "```:swift",
+            "```swift",
             "function hello() {",
             "  return \"Hello World!\"",
             "",
